@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-25T17:29:30+00:00",
+  "generated_at": "2026-08-25T21:05:29+00:00",
   "source_commit": "main",
   "parsers": [
     {
@@ -16,6 +16,20 @@
       "path": "parsers/it/eon/electricity.yaml",
       "sha256": "9c9a71ae7b194fbd8c6b203713f75d74f384f14dff57bdf742e9a92153ff88e3",
       "size": 4450
+    },
+    {
+      "id": "it.tim.internet",
+      "version": 1,
+      "name": "TIM - Linea fissa",
+      "country": "IT",
+      "language": "it",
+      "provider": "TIM",
+      "bill_type": "internet",
+      "parser_schema": 1,
+      "min_billy_version": "0.6.3",
+      "path": "parsers/it/tim/internet.yaml",
+      "sha256": "913aa706ffd665448d39a861e21e8a9df3fc089df7ef1af3c660b54f98b5a1c6",
+      "size": 3205
     }
   ]
 }

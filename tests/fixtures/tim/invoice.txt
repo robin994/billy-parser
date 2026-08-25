@@ -1,0 +1,12 @@
+Fattura Luglio 2030
+Numero fattura: RT12345678
+Data emissione: 16/07/2030
+Importo addebitato salvo buon fine su conto corrente.
+Dettaglio dei costi
+Offerta TIM IVA incl. Rif. IVA Periodo
+Premium Base Fibra 01 lug 30 - 31 lug 30 22% 25,90
+Offerta TIM Totale 25,90
+Totale da pagare € 25,90
+Fattura Luglio 2030 - RT12345678
+RATA UNICA entro il 08/08/2030
+Euro 25,90
