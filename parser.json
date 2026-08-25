@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-25T21:05:29+00:00",
+  "generated_at": "2026-08-25T21:24:14+00:00",
   "source_commit": "main",
   "parsers": [
     {
@@ -19,7 +19,7 @@
     },
     {
       "id": "it.tim.internet",
-      "version": 1,
+      "version": 2,
       "name": "TIM - Linea fissa",
       "country": "IT",
       "language": "it",
@@ -28,8 +28,8 @@
       "parser_schema": 1,
       "min_billy_version": "0.6.3",
       "path": "parsers/it/tim/internet.yaml",
-      "sha256": "913aa706ffd665448d39a861e21e8a9df3fc089df7ef1af3c660b54f98b5a1c6",
-      "size": 3205
+      "sha256": "0adc265fe0020439d0cf1b5c0f25af96289542e0d92fada6cb29f2612ea1abcb",
+      "size": 3330
     }
   ]
 }
