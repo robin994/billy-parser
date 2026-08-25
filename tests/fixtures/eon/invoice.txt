@@ -1,0 +1,18 @@
+E.ON Energia S.p.A.
+La tua bolletta
+Energia elettrica
+DATI FATTURA
+n° 12345678 emessa il 19 agosto 2026
+PERIODO DI FATTURAZIONE
+01 luglio 2026 - 31 luglio 2026
+Importo totale da pagare
+179,00 €
+Consumo totale fatturato 530,22 kWh
+Data di scadenza 31 agosto 2026
+La tua offerta
+E.ON Luceclickverde
+Codice Cliente
+A000000000
+Dati della fornitura
+Codice POD
+IT001E00000000

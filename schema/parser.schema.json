@@ -1,0 +1,418 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/robin994/billy-parser/main/schema/parser.schema.json",
+  "title": "Billy parser schema v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "id",
+    "version",
+    "metadata",
+    "prefilter",
+    "detection",
+    "documents",
+    "fields"
+  ],
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)+$",
+      "maxLength": 120
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "country",
+        "language",
+        "provider",
+        "bill_type",
+        "min_billy_version"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+        "language": {
+          "type": "string",
+          "pattern": "^[a-z]{2}(?:_[A-Z]{2})?$"
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "bill_type": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "homepage": {
+          "type": "string",
+          "format": "uri"
+        },
+        "min_billy_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        }
+      }
+    },
+    "prefilter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "email"
+      ],
+      "properties": {
+        "email": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "from": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 254
+              },
+              "maxItems": 20
+            },
+            "subject_contains": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "maxItems": 20
+            },
+            "subject_regex": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/regex"
+              },
+              "maxItems": 10
+            }
+          },
+          "anyOf": [
+            {
+              "required": [
+                "from"
+              ],
+              "properties": {
+                "from": {
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "subject_contains"
+              ],
+              "properties": {
+                "subject_contains": {
+                  "minItems": 1
+                }
+              }
+            },
+            {
+              "required": [
+                "subject_regex"
+              ],
+              "properties": {
+                "subject_regex": {
+                  "minItems": 1
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "detection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "threshold",
+        "rules"
+      ],
+      "properties": {
+        "threshold": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "rules": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 30,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "source",
+              "weight"
+            ],
+            "properties": {
+              "source": {
+                "type": "string",
+                "enum": [
+                  "email.from",
+                  "email.subject",
+                  "email.body",
+                  "attachment.filename",
+                  "attachment.mime_type"
+                ]
+              },
+              "equals": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "contains": {
+                "type": "string",
+                "maxLength": 500
+              },
+              "regex": {
+                "$ref": "#/$defs/regex"
+              },
+              "weight": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100
+              }
+            },
+            "oneOf": [
+              {
+                "required": [
+                  "equals"
+                ]
+              },
+              {
+                "required": [
+                  "contains"
+                ]
+              },
+              {
+                "required": [
+                  "regex"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "documents": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "email"
+      ],
+      "properties": {
+        "email": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            }
+          }
+        },
+        "attachments": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "extractor"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_-]{0,39}$"
+              },
+              "mime_types": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                "maxItems": 10
+              },
+              "filename_regex": {
+                "$ref": "#/$defs/regex"
+              },
+              "extractor": {
+                "enum": [
+                  "pdf_text",
+                  "text"
+                ]
+              },
+              "required": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    },
+    "fields": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/field"
+      }
+    },
+    "verification": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "field",
+          "sources"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 40
+            },
+            "minItems": 2,
+            "maxItems": 5
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "regex": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 600
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "regex"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "maxLength": 60
+        },
+        "regex": {
+          "$ref": "#/$defs/regex"
+        },
+        "group": {
+          "type": "string",
+          "maxLength": 40
+        }
+      }
+    },
+    "transform": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "text",
+            "decimal",
+            "date",
+            "date_range"
+          ]
+        },
+        "locale": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "formats": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "maxItems": 10
+        },
+        "start_group": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "end_group": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "infer_missing_year": {
+          "type": "boolean"
+        }
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "value": {},
+        "candidates": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/candidate"
+          },
+          "minItems": 1,
+          "maxItems": 20
+        },
+        "transform": {
+          "$ref": "#/$defs/transform"
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "maxItems": 10
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "value"
+          ]
+        },
+        {
+          "required": [
+            "candidates"
+          ]
+        }
+      ]
+    }
+  }
+}

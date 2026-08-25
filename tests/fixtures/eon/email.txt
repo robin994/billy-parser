@@ -1,0 +1,16 @@
+From: E.ON Energia <bollettaweb.eonenergia@eglue.cloud>
+Subject: Notifica emissione bolletta Energia Elettrica
+
+La tua bolletta dell’energia elettrica è pronta!
+Ciao Mario Rossi,
+è disponibile la nuova bolletta dell’energia elettrica, relativa alla tua casa.
+Codice Cliente: A000000000
+Numero Bolletta: 12345678
+Totale da pagare:
+179,00 €
+Periodo di fatturazione
+01 luglio - 31 luglio 2026
+Addebito il:
+31/08/2026
+Metodo di pagamento
+Domiciliazione bancaria

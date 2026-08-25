@@ -1,0 +1,181 @@
+schema: 1
+id: it.eon.electricity
+version: 1
+
+metadata:
+  name: E.ON Energia - Energia elettrica
+  country: IT
+  language: it
+  provider: E.ON Energia
+  bill_type: electricity
+  homepage: https://www.eon-energia.com/
+  min_billy_version: 0.6.0
+
+# Privacy-first check. Billy evaluates this only against metadata already emitted
+# by Home Assistant's IMAP integration. It does not fetch the body/PDF yet.
+prefilter:
+  email:
+    from:
+      - bollettaweb.eonenergia@eglue.cloud
+    subject_contains:
+      - bolletta
+      - energia elettrica
+
+detection:
+  threshold: 70
+  rules:
+    - source: email.from
+      equals: bollettaweb.eonenergia@eglue.cloud
+      weight: 40
+    - source: email.subject
+      regex: '(?i)notifica\s+emissione\s+bolletta\s+energia\s+elettrica'
+      weight: 30
+    - source: email.body
+      regex: '(?i)E\.ON\s+Energia'
+      weight: 20
+    - source: attachment.mime_type
+      equals: application/pdf
+      weight: 5
+    - source: attachment.filename
+      regex: '(?i)^\d+\.pdf$'
+      weight: 5
+
+documents:
+  email:
+    enabled: true
+  attachments:
+    - id: invoice
+      mime_types:
+        - application/pdf
+      filename_regex: '(?i).*\.pdf$'
+      extractor: pdf_text
+      required: false
+
+fields:
+  provider:
+    value: E.ON Energia
+
+  bill_type:
+    value: electricity
+
+  currency:
+    value: EUR
+
+  invoice_number:
+    required: true
+    candidates:
+      - source: invoice
+        regex: '(?i)n[°º]?\s*(?P<value>\d{5,})\s+emessa\s+il'
+      - source: email
+        regex: '(?i)Numero\s+Bolletta:\s*(?P<value>\d+)'
+    transform:
+      type: text
+
+  issue_date:
+    candidates:
+      - source: invoice
+        regex: '(?i)emessa\s+il\s+(?P<value>\d{1,2}\s+[a-zàèéìòù]+\s+\d{4})'
+    transform:
+      type: date
+      locale: it_IT
+
+  amount:
+    required: true
+    candidates:
+      - source: invoice
+        regex: '(?is)Importo\s+totale\s+da\s+pagare\s+(?P<value>[0-9.,]+)\s*€'
+      - source: invoice
+        regex: '(?i)Totale\s+da\s+pagare\s+(?P<value>[0-9.,]+)\s*€'
+      - source: email
+        regex: '(?is)Totale\s+da\s+pagare:\s*(?P<value>[0-9.,]+)\s*€'
+    transform:
+      type: decimal
+      locale: it_IT
+
+  due_date:
+    candidates:
+      - source: invoice
+        regex: '(?i)Data\s+di\s+scadenza\s+(?P<value>\d{1,2}\s+[a-zàèéìòù]+\s+\d{4})'
+      - source: email
+        regex: '(?i)Addebito\s+il:\s*(?P<value>\d{2}/\d{2}/\d{4})'
+    transform:
+      type: date
+      locale: it_IT
+
+  payment_date:
+    candidates:
+      - source: email
+        regex: '(?i)Addebito\s+il:\s*(?P<value>\d{2}/\d{2}/\d{4})'
+    transform:
+      type: date
+      locale: it_IT
+
+  period:
+    required: true
+    outputs:
+      - period_start
+      - period_end
+    candidates:
+      - source: invoice
+        regex: '(?i)(?P<start>\d{1,2}\s+[a-zàèéìòù]+\s+\d{4})\s*-\s*(?P<end>\d{1,2}\s+[a-zàèéìòù]+\s+\d{4})'
+      - source: email
+        regex: '(?i)Periodo\s+di\s+fatturazione\s+(?P<start>\d{1,2}\s+[a-zàèéìòù]+)\s*-\s*(?P<end>\d{1,2}\s+[a-zàèéìòù]+\s+\d{4})'
+    transform:
+      type: date_range
+      locale: it_IT
+      start_group: start
+      end_group: end
+      infer_missing_year: true
+
+  consumption:
+    candidates:
+      - source: invoice
+        regex: '(?i)Consumo\s+totale\s+fatturato\s+(?P<value>[0-9.,]+)\s*kWh'
+      - source: invoice
+        regex: '(?i)Totale\s+consumo\s+fatturato.*?=\s*(?P<value>[0-9.,]+)'
+    transform:
+      type: decimal
+      locale: it_IT
+
+  consumption_unit:
+    value: kWh
+
+  customer_code:
+    candidates:
+      - source: invoice
+        regex: '(?i)Codice\s+Cliente\s+(?P<value>[A-Z0-9]+)'
+      - source: email
+        regex: '(?i)Codice\s+Cliente:\s*(?P<value>[A-Z0-9]+)'
+    transform:
+      type: text
+
+  pod:
+    candidates:
+      - source: invoice
+        regex: '(?i)Codice\s+POD\s+(?P<value>IT[0-9A-Z]+)'
+    transform:
+      type: text
+
+  offer:
+    candidates:
+      - source: invoice
+        regex: '(?i)La\s+tua\s+offerta\s+(?P<value>E\.ON\s+[A-Z0-9._ -]+)'
+      - source: invoice
+        regex: '(?i)Nome\s+offerta\s+(?P<value>E\.ON\s+[A-Z0-9._ -]+)'
+    transform:
+      type: text
+
+  payment_method:
+    candidates:
+      - source: email
+        regex: '(?i)Metodo\s+di\s+pagamento\s+(?P<value>[^\n]+)'
+    transform:
+      type: text
+
+verification:
+  - field: invoice_number
+    sources: [email, invoice]
+  - field: amount
+    sources: [email, invoice]
+  - field: due_date
+    sources: [email, invoice]
