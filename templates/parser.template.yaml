@@ -1,0 +1,199 @@
+# ============================================================================
+# BILLY PARSER TEMPLATE
+# ============================================================================
+# This file is a fully-commented, schema-valid starting point for a new
+# parser. It is intentionally kept OUTSIDE the `parsers/` directory so that
+# `scripts/build_catalog.py` never picks it up, validates it, or includes it
+# in `parser.json`.
+#
+# HOW TO USE THIS TEMPLATE
+#   1. Copy it into parsers/<country>/<provider>/<bill_type>.yaml, e.g.:
+#        cp templates/parser.template.yaml parsers/it/acme/gas.yaml
+#   2. Replace every placeholder value below (search for ACME / TODO).
+#   3. Delete the comments you no longer need — keep the ones that explain
+#      non-obvious choices (regex quirks, ordering of candidates, etc.).
+#   4. Validate with:
+#        python scripts/build_catalog.py --check
+#
+# See README.md ("Creare un nuovo parser" / "Create a new parser") for the
+# full guide, and parsers/it/eon/electricity.yaml or
+# parsers/it/tim/internet.yaml for real-world reference implementations.
+# ============================================================================
+
+schema: 1
+
+# Globally unique id. Convention: <country>.<provider>.<bill_type>, all
+# lowercase, segments separated by "." "_" or "-".
+# Must match ^[a-z0-9]+(?:[._-][a-z0-9]+)+$ and be unique across the whole repo.
+id: xx.acme.gas
+
+# Bump this integer every time you change the parser's behavior (new/changed
+# regex, new fields, etc.) so Billy can detect and re-fetch updated parsers.
+version: 1
+
+metadata:
+  name: ACME Energy - Gas                 # Human-readable label shown in Billy's UI.
+  country: XX                             # ISO 3166-1 alpha-2, uppercase.
+  language: xx                            # ISO 639-1, lowercase (e.g. it, en, it_IT).
+  provider: ACME Energy                   # Provider/company display name.
+  bill_type: gas                          # Free-form short slug (electricity, gas, internet, mobile, ...).
+  homepage: https://www.example.com/      # Optional. Provider's website.
+  min_billy_version: 0.6.0                # Minimum Billy version able to run this parser.
+
+# ----------------------------------------------------------------------------
+# 1) PREFILTER — privacy-first, metadata-only check
+# ----------------------------------------------------------------------------
+# Runs BEFORE Billy fetches the email body or any attachment. It only sees
+# metadata the mail provider already exposes (sender, subject). Keep it broad
+# but cheap: its only job is to decide whether it's worth fetching the rest.
+# At least one of `from`, `subject_contains`, `subject_regex` is required.
+prefilter:
+  email:
+    from:
+      - noreply@acme-energy.example        # Exact sender address(es), lowercase.
+    subject_contains:
+      - bolletta gas                        # Case handling depends on Billy; keep lowercase for safety.
+    # subject_regex:
+    #   - '(?i)fattura\s+gas\s+n\.?\s*\d+'  # Optional: use when subject_contains is too rigid.
+
+# ----------------------------------------------------------------------------
+# 2) DETECTION — weighted rules, run once body/attachments are available
+# ----------------------------------------------------------------------------
+# Every matching rule contributes its `weight` to a running score. The
+# parser is selected once the score reaches `threshold`. Design rules so
+# that a genuine match clears the threshold, but a single incidental
+# coincidence (e.g. a generic PDF mime type) never does on its own.
+detection:
+  threshold: 70
+  rules:
+    - source: email.from          # One of: email.from, email.subject, email.body,
+      equals: noreply@acme-energy.example   #   attachment.filename, attachment.mime_type
+      weight: 40                  # weight: 1-100. Prefer exactly one of equals/contains/regex per rule.
+
+    - source: email.subject
+      regex: '(?i)bolletta\s+gas'
+      weight: 30
+
+    - source: email.body
+      contains: ACME Energy
+      weight: 15
+
+    - source: attachment.mime_type
+      equals: application/pdf
+      weight: 5
+
+    - source: attachment.filename
+      regex: '(?i)^FATTURA_GAS_.*\.pdf$'
+      weight: 10
+
+# ----------------------------------------------------------------------------
+# 3) DOCUMENTS — declare which sources fields can extract from
+# ----------------------------------------------------------------------------
+# `email` is always required (even if disabled). Attachment ids declared
+# here are the values you reference from `fields.*.candidates[].source`.
+documents:
+  email:
+    enabled: true                 # Whether field extraction should look at the email body too.
+  attachments:
+    - id: invoice                 # Lowercase id, referenced below as `source: invoice`.
+      mime_types:
+        - application/pdf
+      filename_regex: '(?i)^FATTURA_GAS_.*\.pdf$'
+      extractor: pdf_text         # pdf_text (extract text from PDF) or text (plain text attachment).
+      required: true              # If true, Billy fails the parse when the attachment is missing.
+
+# ----------------------------------------------------------------------------
+# 4) FIELDS — extraction from the normalized email/attachment text
+# ----------------------------------------------------------------------------
+# Every field is either:
+#   - a static `value` (constants like provider/bill_type/currency), or
+#   - a list of `candidates`, tried in order until one regex matches.
+# A candidate's regex MUST use a named group `(?P<value>...)` (or the group
+# names declared via transform.start_group/end_group for date ranges).
+# `source` must be "email" or one of the attachment ids declared above.
+fields:
+  provider:
+    value: ACME Energy
+
+  bill_type:
+    value: gas
+
+  currency:
+    value: EUR
+
+  invoice_number:
+    required: true                # Parsing fails if no candidate matches and required is true.
+    candidates:
+      - source: invoice
+        regex: '(?i)Numero\s+fattura:\s*(?P<value>[A-Z0-9]{6,})'
+      - source: email              # Fallback source, tried only if the first candidate misses.
+        regex: '(?i)Fattura\s+n\.?\s*(?P<value>[A-Z0-9]{6,})'
+    transform:
+      type: text                  # text | decimal | date | date_range
+
+  issue_date:
+    required: true
+    candidates:
+      - source: invoice
+        regex: '(?i)Data\s+emissione:\s*(?P<value>\d{2}/\d{2}/\d{4})'
+    transform:
+      type: date
+      locale: xx_XX               # Locale used to parse month names / date formats.
+      # formats:                  # Optional: explicit strptime-style formats to try, in order.
+      #   - '%d/%m/%Y'
+
+  amount:
+    required: true
+    candidates:
+      - source: invoice
+        regex: '(?i)Totale\s+da\s+pagare\s*€\s*(?P<value>[0-9.,]+)'
+    transform:
+      type: decimal
+      locale: xx_XX               # Controls decimal/thousands separator parsing (e.g. it_IT: 1.234,56).
+
+  due_date:
+    required: true
+    candidates:
+      - source: invoice
+        regex: '(?i)Scadenza\s+il\s+(?P<value>\d{2}/\d{2}/\d{4})'
+      - source: email
+        regex: '(?i)scadenza\s+(?P<value>\d{2}/\d{2}/\d{4})'
+    transform:
+      type: date
+      locale: xx_XX
+
+  period:
+    required: true
+    outputs:                      # A single candidate match can be fanned out into multiple fields.
+      - period_start
+      - period_end
+    candidates:
+      - source: invoice
+        regex: '(?i)Periodo\s+di\s+fatturazione\s+(?P<start>\d{2}/\d{2}/\d{4})\s*-\s*(?P<end>\d{2}/\d{2}/\d{4})'
+    transform:
+      type: date_range
+      locale: xx_XX
+      start_group: start           # Must match the named groups used in the regex above.
+      end_group: end
+      # infer_missing_year: true   # Optional: use when the end date carries the year but the start doesn't.
+
+  consumption:
+    candidates:
+      - source: invoice
+        regex: '(?i)Consumo\s+totale\s+fatturato\s+(?P<value>[0-9.,]+)\s*Smc'
+    transform:
+      type: decimal
+      locale: xx_XX
+
+  consumption_unit:
+    value: Smc
+
+# ----------------------------------------------------------------------------
+# 5) VERIFICATION (optional) — cross-check a field across independent sources
+# ----------------------------------------------------------------------------
+# Use this for high-stakes fields (amount, due_date, invoice_number) when the
+# same value is expected to appear both in the email body and the attachment.
+# Billy will flag a mismatch instead of silently trusting a single source.
+verification:
+  - field: due_date
+    sources: [email, invoice]
