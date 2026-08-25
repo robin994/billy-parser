@@ -1,6 +1,6 @@
 schema: 1
 id: it.tim.internet
-version: 1
+version: 2
 
 metadata:
   name: TIM - Linea fissa
@@ -35,6 +35,9 @@ detection:
     - source: attachment.mime_type
       equals: application/pdf
       weight: 5
+    - source: attachment.mime_type
+      equals: application/octet-stream
+      weight: 5
     - source: attachment.filename
       regex: '(?i)^FATTURA_.*\.pdf$'
       weight: 10
@@ -46,6 +49,7 @@ documents:
     - id: invoice
       mime_types:
         - application/pdf
+        - application/octet-stream
       filename_regex: '(?i)^FATTURA_.*\.pdf$'
       extractor: pdf_text
       required: true
