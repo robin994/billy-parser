@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-26T17:36:38+00:00",
-  "source_commit": "959e6accf8d149c6cea12a856178b37e25d2d991",
+  "generated_at": "2026-08-26T18:07:28+00:00",
+  "source_commit": "70688d8d4e88aec1f6ce56848b40332b156a0e83",
   "parsers": [
     {
       "id": "it.a2aenergia.energy",
@@ -17,7 +17,13 @@
       "min_billy_version": "0.6.0",
       "path": "parsers/it/a2aenergia/energy.yaml",
       "sha256": "620e2936b9ebfa354684d68d3d13d56a462b6e42fbadfc93ec90347a3afd42d9",
-      "size": 2745
+      "size": 2745,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      }
     },
     {
       "id": "it.edisonenergia.energy",
@@ -33,7 +39,13 @@
       "min_billy_version": "0.6.0",
       "path": "parsers/it/edisonenergia/energy.yaml",
       "sha256": "80e47a80d8f82b873e50e95a6de05ec6cce1caf035925be00decd1bb210de094",
-      "size": 2769
+      "size": 2769,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      }
     },
     {
       "id": "it.enelenergia.energy",
@@ -49,7 +61,13 @@
       "min_billy_version": "0.6.0",
       "path": "parsers/it/enelenergia/energy.yaml",
       "sha256": "3cfd41ff17731043d013e8f755d51631c8fc4d1cff6aa94fd6878c1b184992aa",
-      "size": 2753
+      "size": 2753,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      }
     },
     {
       "id": "it.eon.electricity",
@@ -65,7 +83,13 @@
       "min_billy_version": "0.6.0",
       "path": "parsers/it/eon/electricity.yaml",
       "sha256": "e1ac60df08e3f3bfdf54fe85ad43c8ed4ef1a75498720d5aeaa5feebad8c840d",
-      "size": 4489
+      "size": 4489,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      }
     },
     {
       "id": "it.fastweb.telecom",
@@ -81,7 +105,13 @@
       "min_billy_version": "0.6.0",
       "path": "parsers/it/fastweb/telecom.yaml",
       "sha256": "c208693bba170d6c1777550a2a475c4312b6f84276ca1267caa9c436d635ca0f",
-      "size": 2449
+      "size": 2449,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      }
     },
     {
       "id": "it.heracomm.energy",
@@ -97,7 +127,13 @@
       "min_billy_version": "0.6.0",
       "path": "parsers/it/heracomm/energy.yaml",
       "sha256": "18087bfd228617876cb32b311c41c7e83e4ed4ecabe8cf4ded0aefe4565be7fb",
-      "size": 2732
+      "size": 2732,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      }
     },
     {
       "id": "it.plenitude.energy",
@@ -113,7 +149,13 @@
       "min_billy_version": "0.6.0",
       "path": "parsers/it/plenitude/energy.yaml",
       "sha256": "48c5fc17ce97cec5047649721ed95f577757b330968454b2341891ddfdd5c42f",
-      "size": 2813
+      "size": 2813,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      }
     },
     {
       "id": "it.sorgenia.energy",
@@ -129,7 +171,13 @@
       "min_billy_version": "0.6.0",
       "path": "parsers/it/sorgenia/energy.yaml",
       "sha256": "f16d1148556b46828f93c0bcb9c70f692d8d7e6fe15cea01199f03fa2f5bf6f3",
-      "size": 2714
+      "size": 2714,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      }
     },
     {
       "id": "it.tim.internet",
@@ -145,7 +193,13 @@
       "min_billy_version": "0.6.3",
       "path": "parsers/it/tim/internet.yaml",
       "sha256": "b41ea578208999d254d8c439bc983385b54a7acefc9f9de6fc21990b149f1951",
-      "size": 3369
+      "size": 3369,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      }
     }
   ]
 }

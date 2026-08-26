@@ -2,7 +2,41 @@
 
 Community-maintained declarative parser definitions for [Billy](https://github.com/robin994/billy).
 
-Billy discovers parsers through generated country catalogs and downloads a parser YAML only when a user installs or updates it. Parsers cannot execute Python, JavaScript or shell commands and cannot perform network or filesystem operations.
+Billy discovers parsers through generated country catalogs and downloads a parser YAML only when a user installs or updates it. Parsers are declarative: they cannot execute Python, JavaScript or shell commands and cannot perform network or filesystem operations.
+
+## Community lifecycle
+
+```text
+Custom -> Shared -> Experimental -> Community feedback -> Verified
+```
+
+There is no mandatory maintainer review in this flow. Billy opens machine-readable GitHub issues, GitHub Actions validates them, and valid submissions/feedback are committed automatically. If branch protection blocks a direct push, the workflow creates a bot branch and enables auto-merge after CI without requesting human review.
+
+Every parser lives in the normal country/provider/type tree and carries `metadata.status`:
+
+- `experimental` - available for community testing;
+- `verified` - currently meets the community verification policy or is an existing trusted parser;
+- `outdated` - obsolete or no longer matching the provider format.
+
+`metadata.status` is the lifecycle source of truth. `metadata.quality` is written only for backward compatibility.
+
+A new version of an existing parser is always returned to `experimental`. Feedback is version-scoped, so votes from v1 never count toward v2.
+
+## Automatic verification
+
+Feedback results are `working`, `partial`, or `failed`. The current policy is centralized in `scripts/community_policy.py`:
+
+- at least 5 distinct voters;
+- at least 5 `working` votes;
+- `working / total >= 0.80`.
+
+`partial` and `failed` both count in the denominator. Community-promoted parsers are recalculated as feedback changes; if their ratio later drops below the policy, that version returns to `experimental`. Existing trusted parsers such as E.ON/TIM are not demoted by absence of community feedback.
+
+## Privacy
+
+Billy never sends invoice PDFs, email contents, amounts, POD/PDR, customer names, addresses, or the original community identifier.
+
+Feedback contains only an already-anonymized SHA-256 installation fingerprint. It is used solely to deduplicate one vote per installation for one parser/version. Fingerprints are stored only in `feedback/` and are never copied into public catalog entries. Catalogs expose aggregate counts only.
 
 ## Catalog v2
 
@@ -15,53 +49,80 @@ catalog/fr.json
 ...
 ```
 
-`catalog/index.json` contains only the available country shards and their parser counts. A Billy installation reads the index and then downloads only the shard for its configured Home Assistant country. It never needs to crawl the GitHub repository or download parser YAML files during discovery.
+`catalog/index.json` contains only available country shards and parser counts. Billy reads the index and downloads only the shard for its country. It does not crawl GitHub and does not download parser YAML files during discovery.
 
-Each `catalog/<country>.json` contains the metadata needed by Billy for that country only: parser id/version, provider, bill type, lifecycle status, compatibility, download path and integrity metadata.
+Each parser entry can expose aggregate feedback:
 
-The legacy root `parser.json` is generated in parallel during the migration period for older Billy clients. New clients should prefer Catalog v2 and use `parser.json` only as a compatibility fallback.
+```json
+{
+  "id": "it.heracomm.energy",
+  "version": 1,
+  "status": "experimental",
+  "feedback": {
+    "working": 3,
+    "partial": 1,
+    "failed": 0,
+    "contributors": 4
+  }
+}
+```
 
-## Parser lifecycle
+The root `parser.json` is still generated for legacy Billy clients.
 
-Every parser lives in the normal country/provider/type tree and carries a `metadata.status` value:
+## Submission v2
 
-- `experimental` — parser available for community testing;
-- `verified` — parser confirmed by users on real bills;
-- `outdated` — parser is obsolete or no longer matches the provider format.
+Billy creates issues containing exactly one marker:
 
-There is no separate experimental directory. Promotion only changes `metadata.status`; the parser path and ID remain stable. `metadata.quality` is kept temporarily for compatibility with existing Billy clients, but it is no longer the lifecycle source of truth.
+```text
+<!-- billy-parser-submission:v2 -->
+```
 
-## Publish from Billy
+followed by the submission JSON and a fenced YAML parser. The pipeline validates both schemas, parser identity/version/country/provider/type consistency, safe paths, regexes, parser schema compatibility and semantic/privacy rules.
 
-Billy can generate a GitHub submission for a locally saved custom parser. The browser opens a pre-filled GitHub issue; after the user submits it, GitHub Actions validates the YAML and, if valid, publishes it automatically to `main` and rebuilds Catalog v2 plus the legacy `parser.json`.
+Valid new parsers are created automatically. Existing parsers can be replaced only by a strictly higher version. The workflow forces:
 
-No invoice, email body or attachment is uploaded by Billy. Only the parser YAML is included in the submission.
+```yaml
+metadata:
+  status: experimental
+  quality: experimental
+```
 
-### Ownership rules
+No separate experimental directory exists.
 
-- New parser: published as `experimental`, owner is taken from the GitHub issue author.
-- Update: only the original GitHub owner can update that experimental parser.
-- Version must increase.
-- Experimental submissions cannot modify parsers whose status is `verified` or `outdated`.
-- The workflow injects `metadata.status: experimental`, compatibility `metadata.quality: experimental`, and `metadata.submitted_by`; values supplied by the issue body are never trusted for promotion or ownership.
+## Feedback v1
 
-## Automatic validation
+Billy creates issues containing exactly one marker:
 
-The publisher rejects malformed schema, unsafe/invalid regexes, duplicate IDs, path mismatches, static values in sensitive fields, unauthorized updates and oversized submissions.
+```text
+<!-- billy-parser-feedback:v1 -->
+```
 
-Repository layout:
+The workflow validates the feedback JSON, verifies the parser/current version, deduplicates by SHA-256 fingerprint, updates aggregate state, applies automatic promotion/demotion when appropriate, rebuilds catalogs, comments the result and closes the issue.
+
+Feedback storage is versioned independently:
+
+```text
+feedback/<country>/<provider>/<type>/v<version>.json
+```
+
+## Repository layout
 
 ```text
 parsers/<country>/<provider>/<type>.yaml
+feedback/<country>/<provider>/<type>/v<version>.json
 catalog/index.json
 catalog/<country>.json
 schema/parser.schema.json
+schema/submission.schema.json
+schema/feedback.schema.json
 scripts/build_catalog.py
 scripts/publish_submission.py
+scripts/process_feedback.py
+scripts/community_policy.py
 parser.json
 ```
 
-For normal pull-request development:
+## Development
 
 ```bash
 python -m pip install -r requirements-dev.txt
@@ -69,6 +130,8 @@ python scripts/build_catalog.py --check
 pytest -q
 ```
 
-## Repository setup required
+## GitHub repository setup
 
-For automatic community publishing, GitHub Actions must be allowed to write repository contents and issues. If `main` is protected, the `github-actions[bot]` identity must be allowed to bypass the rule for these workflow pushes; otherwise the submission will validate but cannot be published automatically.
+Actions needs `contents: write` and `issues: write`. `pull-requests: write` is used only for the branch-protection fallback.
+
+For a fully unattended pipeline, either allow `github-actions[bot]` to push to `main`, or enable repository auto-merge and configure branch protection so the bot PR can merge after CI without required human reviews. No client secret, PAT, OAuth secret or private key is stored in Billy.

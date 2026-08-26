@@ -5,8 +5,10 @@ on:
     branches: [main]
     paths:
       - 'parsers/**'
+      - 'feedback/**'
       - 'schema/**'
       - 'scripts/build_catalog.py'
+      - 'scripts/community_policy.py'
       - '.github/workflows/build-catalog.yml'
   workflow_dispatch:
 
@@ -14,7 +16,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: billy-parser-catalog-main
+  group: billy-parser-community-writes
   cancel-in-progress: false
 
 jobs:

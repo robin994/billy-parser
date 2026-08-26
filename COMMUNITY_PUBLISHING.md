@@ -1,37 +1,75 @@
-# Community experimental publishing
+# Community publishing and verification
 
-The workflow `.github/workflows/publish-experimental.yml` turns a GitHub issue containing the Billy submission marker into an automatically published **experimental** parser.
+Billy Parser is designed for an unattended community pipeline. Normal parser submissions and feedback do not require maintainer review.
 
-## One-time GitHub repository settings
+## Workflows
 
-1. Open **Settings → Actions → General → Workflow permissions**.
-2. Enable **Read and write permissions** for `GITHUB_TOKEN` if the repository policy currently restricts it.
-3. If `main` is protected by a branch rule/ruleset, allow GitHub Actions to bypass that rule for this repository, or exempt the `github-actions[bot]` workflow identity from the direct-push restriction.
-4. Create the optional label `parser-submission` if you want submitted issues visually grouped. The workflow itself does not depend on the label.
+- `.github/workflows/community-submission.yml` processes `billy-parser-submission:v2` issues.
+- `.github/workflows/community-feedback.yml` processes `billy-parser-feedback:v1` issues.
+- `.github/workflows/build-catalog.yml` rebuilds generated catalogs for direct repository changes.
+- `.github/workflows/validate.yml` runs source validation and tests.
 
-No repository secret, PAT, OAuth client secret or GitHub App private key is required.
+Community write workflows share the concurrency group `billy-parser-community-writes` with `cancel-in-progress: false` so parser, feedback and generated catalog writes are serialized.
 
-## Flow
+## Submission flow
 
-1. Billy exports a locally stored custom parser.
-2. Billy opens `robin994/billy-parser/issues/new` with the YAML prefilled and the marker `billy-parser-submission:v1`.
-3. The contributor submits the issue using their normal GitHub session.
-4. GitHub Actions validates the issue author and YAML.
-5. A new parser is forced to `metadata.status: experimental`; `metadata.quality: experimental` is also written for compatibility and `metadata.submitted_by` is set from the issue author.
-6. Promotion changes only `metadata.status` to `verified`; obsolete parsers become `outdated`. The parser stays in the same country/provider/type path.
-7. The parser is committed to `main`.
-8. Catalog v2 (`catalog/index.json` + country shards) and legacy `parser.json` are rebuilt with `source_commit` pinned to the immutable parser commit SHA.
-9. The bot comments on and closes the issue.
+1. Billy creates an issue containing `<!-- billy-parser-submission:v2 -->`.
+2. `scripts/publish_submission.py` extracts the JSON envelope and YAML strictly as data.
+3. The JSON is checked against `schema/submission.schema.json`.
+4. The YAML is checked against `schema/parser.schema.json` and the repository semantic/regex/privacy validator.
+5. Envelope identity must match the YAML (`parser_id`, version, country, provider and bill type).
+6. The repository path is derived from the validated parser id; user-provided paths are never used.
+7. `metadata.status` and compatibility `metadata.quality` are forced to `experimental`.
+8. A new parser is created, or an existing parser is replaced only when the submitted version is higher.
+9. Tests run and Catalog v2 plus legacy `parser.json` are regenerated.
+10. The workflow attempts a direct push. If branch protection rejects it, it creates a bot branch/PR and enables auto-merge after CI.
+11. The issue receives `parser-submission` plus `community-accepted` or `community-rejected`, gets a result comment and is closed.
 
-If validation fails, the bot comments with the reason. Editing the issue automatically retries validation.
+A newer version of a previously verified parser intentionally returns to `experimental`. Feedback files for older versions remain historical and are not transferred.
 
-## Protected operations
+## Feedback flow
 
-The automatic channel cannot:
+1. Billy creates an issue containing `<!-- billy-parser-feedback:v1 -->`.
+2. `scripts/process_feedback.py` validates the JSON against `schema/feedback.schema.json`.
+3. The SHA-256 fingerprint, parser id and current parser version are verified.
+4. One fingerprint has one vote for one parser/version. Sending a new result with the same fingerprint replaces the previous vote.
+5. Votes are stored under `feedback/<country>/<provider>/<type>/v<version>.json`.
+6. Aggregate counts are recalculated and automatic verification policy is evaluated.
+7. If required, the parser YAML changes between `experimental` and community-verified `verified`.
+8. Tests and catalog generation run, changes are committed, and the issue is labelled/commented/closed.
 
-- update `verified` or `outdated` parsers;
-- update another contributor's experimental parser;
-- lower/reuse an existing version;
-- choose its own owner;
-- promote itself above experimental;
-- store static values for sensitive fields such as invoice/customer/POD/PDR/account identifiers.
+The feedback store can contain fingerprints; generated catalogs never do. `build_catalog.py` reads feedback and exports only `working`, `partial`, `failed` and `contributors` counts.
+
+## Automatic verification policy
+
+The thresholds live only in `scripts/community_policy.py`:
+
+```text
+MIN_DISTINCT_VOTES = 5
+MIN_WORKING_VOTES = 5
+MIN_WORKING_RATIO = 0.80
+```
+
+Examples:
+
+```text
+5 working, 0 partial, 0 failed -> verified
+5 working, 1 partial, 0 failed -> verified
+5 working, 0 partial, 2 failed -> experimental
+```
+
+Community-promoted verification is recalculated if later votes change the ratio. Existing trusted parsers that were not promoted through community feedback are not automatically demoted.
+
+## Security model
+
+Issue bodies are untrusted input. The Python processors never evaluate or execute issue content. They do not accept arbitrary paths and do not interpolate issue bodies into shell commands.
+
+The pipeline rejects invalid JSON/YAML, unsupported parser schema, malformed ids/countries/versions, unsafe paths, invalid or dangerous regexes, sensitive static values and stale/same-version parser replacements.
+
+Billy sends no invoice, PDF, email body, amount, POD/PDR, customer name, address or original community id.
+
+## Repository settings
+
+Enable read/write workflow permissions for `GITHUB_TOKEN`. If `main` rejects direct bot pushes, enable GitHub auto-merge and ensure branch rules allow the bot PR to merge after CI without a human review requirement.
+
+No repository secret is required by Billy clients.

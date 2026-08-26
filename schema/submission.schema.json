@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Billy parser submission v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "parser_id",
+    "version",
+    "country",
+    "provider",
+    "bill_type",
+    "requested_status",
+    "billy_version"
+  ],
+  "properties": {
+    "schema_version": { "const": 2 },
+    "parser_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)+$",
+      "maxLength": 120
+    },
+    "version": { "type": "integer", "minimum": 1 },
+    "country": { "type": "string", "pattern": "^[A-Z]{2}$" },
+    "provider": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "bill_type": { "type": "string", "minLength": 1, "maxLength": 60 },
+    "requested_status": { "const": "experimental" },
+    "billy_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    }
+  }
+}

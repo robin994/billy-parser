@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Publish an experimental parser submitted through a GitHub issue.
-
-The issue body is treated strictly as data. This script never executes contributor
-content and only writes a declarative YAML parser after schema/semantic/privacy
-validation succeeds.
-"""
+"""Validate and publish a Billy parser submission v2 from a GitHub issue."""
 from __future__ import annotations
 
 import argparse
@@ -19,12 +14,10 @@ import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA_PATH = ROOT / "schema" / "parser.schema.json"
-PARSERS_DIR = ROOT / "parsers"
-CATALOG_PATH = ROOT / "parser.json"
-MARKER = "<!-- billy-parser-submission:v1 -->"
+MARKER = "<!-- billy-parser-submission:v2 -->"
 MAX_ISSUE_BODY_CHARS = 100_000
 MAX_SUBMISSION_BYTES = 32_000
+MAX_JSON_BYTES = 8_000
 
 _SPEC = importlib.util.spec_from_file_location("build_catalog", ROOT / "scripts" / "build_catalog.py")
 _BUILD = importlib.util.module_from_spec(_SPEC)
@@ -44,19 +37,45 @@ def _write_result(result_path: Path | None, *, ok: bool, message: str, **extra: 
     result_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def _extract_yaml(body: str) -> str:
+def _extract_json(after_marker: str) -> dict[str, Any]:
+    fenced = re.search(r"```json\s*\n(?P<content>.*?)\n```", after_marker, re.IGNORECASE | re.DOTALL)
+    if fenced is not None:
+        raw = fenced.group("content").strip()
+    else:
+        candidate = after_marker.lstrip()
+        try:
+            value, _ = json.JSONDecoder().raw_decode(candidate)
+        except json.JSONDecodeError as err:
+            raise SubmissionError(f"Invalid submission JSON: {err}") from err
+        if not isinstance(value, dict):
+            raise SubmissionError("Submission JSON root must be an object")
+        return value
+
+    if len(raw.encode("utf-8")) > MAX_JSON_BYTES:
+        raise SubmissionError("Submission JSON exceeds 8 KB")
+    try:
+        value = json.loads(raw)
+    except json.JSONDecodeError as err:
+        raise SubmissionError(f"Invalid submission JSON: {err}") from err
+    if not isinstance(value, dict):
+        raise SubmissionError("Submission JSON root must be an object")
+    return value
+
+
+def _extract_payloads(body: str) -> tuple[dict[str, Any], str]:
     if len(body) > MAX_ISSUE_BODY_CHARS:
         raise SubmissionError("Issue body is too large")
     if body.count(MARKER) != 1:
-        raise SubmissionError("Missing or duplicate Billy submission marker")
+        raise SubmissionError("Missing or duplicate Billy submission v2 marker")
     after = body.split(MARKER, 1)[1]
-    match = re.search(r"```(?:yaml|yml)\s*\n(?P<content>.*?)\n```", after, re.IGNORECASE | re.DOTALL)
-    if match is None:
-        raise SubmissionError("Submission must contain one fenced YAML block after the Billy marker")
-    content = match.group("content").strip() + "\n"
+    envelope = _extract_json(after)
+    yaml_match = re.search(r"```(?:yaml|yml)\s*\n(?P<content>.*?)\n```", after, re.IGNORECASE | re.DOTALL)
+    if yaml_match is None:
+        raise SubmissionError("Submission must contain one fenced YAML block after the marker")
+    content = yaml_match.group("content").strip() + "\n"
     if len(content.encode("utf-8")) > MAX_SUBMISSION_BYTES:
         raise SubmissionError("Parser YAML exceeds the 32 KB community submission limit")
-    return content
+    return envelope, content
 
 
 def _load_parser(content: str) -> dict[str, Any]:
@@ -72,10 +91,33 @@ def _load_parser(content: str) -> dict[str, Any]:
 def _validate_author(author: str) -> str:
     author = author.strip()
     if author.endswith("[bot]"):
-        raise SubmissionError("Bot accounts cannot own experimental parsers")
+        raise SubmissionError("Bot accounts cannot submit community parsers")
     if not re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?", author):
         raise SubmissionError("Invalid GitHub author login")
     return author
+
+
+def _validate_json_schema(root: Path, envelope: dict[str, Any]) -> None:
+    schema = json.loads((root / "schema" / "submission.schema.json").read_text(encoding="utf-8"))
+    errors = sorted(Draft202012Validator(schema).iter_errors(envelope), key=lambda err: list(err.absolute_path))
+    if errors:
+        message = "; ".join(
+            f"{'.'.join(str(x) for x in error.absolute_path) or '<root>'}: {error.message}"
+            for error in errors[:12]
+        )
+        raise SubmissionError(f"Submission JSON schema validation failed: {message}")
+
+
+def _validate_parser_schema(root: Path, parser: dict[str, Any]) -> None:
+    schema = json.loads((root / "schema" / "parser.schema.json").read_text(encoding="utf-8"))
+    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    errors = sorted(validator.iter_errors(parser), key=lambda err: list(err.absolute_path))
+    if errors:
+        message = "; ".join(
+            f"{'.'.join(str(x) for x in error.absolute_path) or '<root>'}: {error.message}"
+            for error in errors[:12]
+        )
+        raise SubmissionError(f"Parser schema validation failed: {message}")
 
 
 def _target_path(root: Path, parser: dict[str, Any]) -> Path:
@@ -85,14 +127,18 @@ def _target_path(root: Path, parser: dict[str, Any]) -> Path:
     bill_type = str(metadata.get("bill_type") or "").casefold()
     parts = parser_id.split(".")
     if len(parts) < 3:
-        raise SubmissionError("Community parser IDs must contain country, provider and bill type")
+        raise SubmissionError("Parser IDs must contain country, provider and bill type")
     if parts[0] != country:
         raise SubmissionError("Parser ID country prefix does not match metadata.country")
     if parts[-1] != bill_type:
         raise SubmissionError("Parser ID suffix must match metadata.bill_type")
-    # parser id validation disallows slashes and traversal characters. The path is
-    # nevertheless constructed from individual id segments instead of user paths.
-    return root / "parsers" / Path(*parts[:-1]) / f"{parts[-1]}.yaml"
+    if any(not re.fullmatch(r"[a-z0-9_-]+", part) for part in parts):
+        raise SubmissionError("Parser ID contains an unsafe path segment")
+    target = root / "parsers" / Path(*parts[:-1]) / f"{parts[-1]}.yaml"
+    resolved_root = (root / "parsers").resolve()
+    if resolved_root not in target.resolve().parents:
+        raise SubmissionError("Unsafe parser path")
+    return target
 
 
 def _existing_parsers(root: Path) -> dict[str, tuple[Path, dict[str, Any]]]:
@@ -105,110 +151,91 @@ def _existing_parsers(root: Path) -> dict[str, tuple[Path, dict[str, Any]]]:
     return result
 
 
-def _validate_submission(root: Path, parser: dict[str, Any], author: str) -> tuple[Path, bool]:
-    metadata = parser.get("metadata")
-    if not isinstance(metadata, dict):
-        raise SubmissionError("metadata is required")
-
-    # Community submissions can never self-promote. Ownership is injected from
-    # github.event.issue.user.login, never trusted from the submitted YAML.
-    metadata["status"] = "experimental"
-    metadata["quality"] = "experimental"
-    metadata["submitted_by"] = author
-
-    schema = json.loads((root / "schema" / "parser.schema.json").read_text(encoding="utf-8"))
-    validator = Draft202012Validator(schema, format_checker=FormatChecker())
-    errors = sorted(validator.iter_errors(parser), key=lambda err: list(err.absolute_path))
-    if errors:
-        lines = []
-        for error in errors[:12]:
-            location = ".".join(str(x) for x in error.absolute_path) or "<root>"
-            lines.append(f"{location}: {error.message}")
-        raise SubmissionError("Schema validation failed: " + "; ".join(lines))
-
-    parser_id = str(parser["id"])
-    existing = _existing_parsers(root)
-    target = _target_path(root, parser)
-    is_update = parser_id in existing
-
-    if is_update:
-        existing_path, old = existing[parser_id]
-        old_meta = old.get("metadata") or {}
-        old_status = _BUILD._catalog_status(old_meta)
-        if old_status != "experimental":
-            raise SubmissionError("Only experimental community parsers can be updated through this channel")
-        owner = str(old_meta.get("submitted_by") or "")
-        if owner.casefold() != author.casefold():
-            raise SubmissionError(f"Parser {parser_id} is owned by @{owner or 'unknown'}")
-        old_version = int(old.get("version") or 0)
-        new_version = int(parser.get("version") or 0)
-        if new_version <= old_version:
-            raise SubmissionError(f"Parser version must increase above v{old_version}")
-        for key in ("country", "provider", "bill_type"):
-            if str(metadata.get(key) or "").casefold() != str(old_meta.get(key) or "").casefold():
-                raise SubmissionError(f"metadata.{key} cannot change on an automatic experimental update")
-        # Preserve the original repository path even if a future path convention changes.
-        target = existing_path
-    else:
-        if target.exists():
-            other = _BUILD._load_yaml(target)
-            raise SubmissionError(
-                f"Target path is already used by parser {other.get('id') or 'unknown'}"
-            )
-
-    # Semantic/privacy/regex validation. Temporarily point build_catalog's ROOT at
-    # this repository root so its path-aware diagnostics stay correct in tests.
-    old_root = _BUILD.ROOT
-    try:
-        _BUILD.ROOT = root
-        try:
-            _BUILD._semantic_validate(parser, target)
-        except ValueError as err:
-            raise SubmissionError(str(err)) from err
-    finally:
-        _BUILD.ROOT = old_root
-
-    return target, is_update
-
-
 def _canonical_yaml(parser: dict[str, Any]) -> str:
-    return yaml.safe_dump(
-        parser,
-        sort_keys=False,
-        allow_unicode=True,
-        default_flow_style=False,
-        width=1000,
-    )
+    return yaml.safe_dump(parser, sort_keys=False, allow_unicode=True, default_flow_style=False, width=1000)
+
+
+def _validate_contract(envelope: dict[str, Any], parser: dict[str, Any]) -> None:
+    metadata = parser.get("metadata") or {}
+    checks = {
+        "parser_id": parser.get("id"),
+        "version": parser.get("version"),
+        "country": metadata.get("country"),
+        "provider": metadata.get("provider"),
+        "bill_type": metadata.get("bill_type"),
+    }
+    for key, actual in checks.items():
+        if envelope.get(key) != actual:
+            raise SubmissionError(f"Submission JSON {key} does not match parser YAML")
 
 
 def publish_submission(root: Path, author: str, body: str) -> dict[str, Any]:
     root = Path(root)
     author = _validate_author(author)
-    content = _extract_yaml(body)
+    envelope, content = _extract_payloads(body)
+    _validate_json_schema(root, envelope)
     parser = _load_parser(content)
-    target, is_update = _validate_submission(root, parser, author)
+    _validate_contract(envelope, parser)
 
-    target.parent.mkdir(parents=True, exist_ok=True)
-    canonical = _canonical_yaml(parser)
-    target.write_text(canonical, encoding="utf-8")
+    metadata = parser.get("metadata")
+    if not isinstance(metadata, dict):
+        raise SubmissionError("metadata is required")
+    metadata["status"] = "experimental"
+    metadata["quality"] = "experimental"
+    metadata["submitted_by"] = author
+
+    _validate_parser_schema(root, parser)
+    target = _target_path(root, parser)
+
+    old_root = _BUILD.ROOT
+    try:
+        _BUILD.ROOT = root
+        _BUILD._semantic_validate(parser, target)
+    except ValueError as err:
+        raise SubmissionError(str(err)) from err
+    finally:
+        _BUILD.ROOT = old_root
+
+    parser_id = str(parser["id"])
+    version = int(parser["version"])
+    existing = _existing_parsers(root)
+    is_update = parser_id in existing
+    already_processed = False
+
+    if is_update:
+        existing_path, old = existing[parser_id]
+        old_version = int(old.get("version") or 0)
+        target = existing_path
+        if version < old_version:
+            raise SubmissionError(f"Parser version must be greater than current v{old_version}")
+        if version == old_version:
+            normalized_old = dict(old)
+            old_meta = dict(normalized_old.get("metadata") or {})
+            old_meta["status"] = "experimental"
+            old_meta["quality"] = "experimental"
+            old_meta["submitted_by"] = author
+            normalized_old["metadata"] = old_meta
+            if _canonical_yaml(normalized_old) == _canonical_yaml(parser):
+                already_processed = True
+            else:
+                raise SubmissionError(f"Parser version must increase above v{old_version}")
+
+    if not already_processed:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(_canonical_yaml(parser), encoding="utf-8")
 
     try:
-        catalog = _BUILD.build_catalog(root)
+        _BUILD.build_catalog(root)
     except Exception as err:
-        # The workflow workspace is disposable, but removing a newly written file
-        # makes local/test use less surprising. Updates are restored by the caller's
-        # git checkout, so we leave them in place only in the ephemeral workflow.
         raise SubmissionError(f"Catalog validation failed: {err}") from err
 
-    # Catalog generation is intentionally a second workflow phase. The parser is
-    # committed first, then parser.json is generated with source_commit pinned to
-    # that immutable parser commit SHA.
     return {
-        "parser_id": str(parser["id"]),
-        "version": int(parser["version"]),
+        "parser_id": parser_id,
+        "version": version,
         "path": target.relative_to(root).as_posix(),
         "author": author,
         "update": is_update,
+        "already_processed": already_processed,
         "quality": "experimental",
         "status": "experimental",
     }
@@ -242,10 +269,8 @@ def main() -> int:
         print(message, file=sys.stderr)
         return 1
 
-    message = (
-        f"Published {result['parser_id']} v{result['version']} as experimental "
-        f"for @{result['author']}."
-    )
+    action = "Already processed" if result["already_processed"] else "Accepted"
+    message = f"{action}: {result['parser_id']} v{result['version']} is experimental."
     _write_result(args.result, ok=True, message=message, issue_number=issue_number, **result)
     print(message)
     return 0

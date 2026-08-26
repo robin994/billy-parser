@@ -144,6 +144,35 @@ def _catalog_status(metadata: dict) -> str:
     return "verified"
 
 
+def _feedback_counts(root: Path, parser_id: str, version: int) -> dict[str, int]:
+    """Return aggregate feedback for one parser/version without exposing voters."""
+    parts = parser_id.split(".")
+    if len(parts) < 3 or any(not re.fullmatch(r"[a-z0-9_-]+", part) for part in parts):
+        raise ValueError(f"Invalid parser id for feedback lookup: {parser_id}")
+    path = root / "feedback" / Path(*parts[:-1]) / parts[-1] / f"v{version}.json"
+    counts = {"working": 0, "partial": 0, "failed": 0, "contributors": 0}
+    if not path.exists():
+        return counts
+
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as err:
+        raise ValueError(f"{path.relative_to(root)}: invalid feedback JSON: {err}") from err
+    if data.get("parser_id") != parser_id or data.get("version") != version:
+        raise ValueError(f"{path.relative_to(root)}: feedback identity mismatch")
+    votes = data.get("votes")
+    if not isinstance(votes, dict):
+        raise ValueError(f"{path.relative_to(root)}: feedback votes must be an object")
+    for fingerprint, result in votes.items():
+        if not re.fullmatch(r"[a-f0-9]{64}", str(fingerprint)):
+            raise ValueError(f"{path.relative_to(root)}: invalid feedback fingerprint")
+        if result not in {"working", "partial", "failed"}:
+            raise ValueError(f"{path.relative_to(root)}: invalid feedback result")
+        counts[result] += 1
+    counts["contributors"] = len(votes)
+    return counts
+
+
 def build_catalog(root: Path | None = None) -> dict:
     root = Path(root or ROOT)
     schema_path = root / "schema" / "parser.schema.json"
@@ -196,6 +225,7 @@ def build_catalog(root: Path | None = None) -> dict:
             "path": path.relative_to(root).as_posix(),
             "sha256": hashlib.sha256(raw).hexdigest(),
             "size": len(raw),
+            "feedback": _feedback_counts(root, parser_id, int(parser["version"])),
         }
         for optional in ("submitted_by", "changelog", "deprecated", "replacement"):
             if optional in metadata:
