@@ -181,29 +181,6 @@
       }
     },
     {
-      "id": "it.test.internet",
-      "version": 2,
-      "name": "TIM - Linea fissa",
-      "country": "IT",
-      "language": "it",
-      "provider": "TIM",
-      "bill_type": "internet",
-      "quality": "experimental",
-      "status": "experimental",
-      "parser_schema": 1,
-      "min_billy_version": "0.6.3",
-      "path": "parsers/it/test/internet.yaml",
-      "sha256": "6d76eaef0a12dc1b5aceba98156688eaa3ce2337cfd54b7f04d413c1becd111c",
-      "size": 3105,
-      "feedback": {
-        "working": 0,
-        "partial": 0,
-        "failed": 0,
-        "contributors": 0
-      },
-      "submitted_by": "robin994"
-    },
-    {
       "id": "it.tim.internet",
       "version": 2,
       "name": "TIM - Linea fissa",
