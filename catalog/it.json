@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "country": "IT",
-  "generated_at": "2026-08-26T16:23:18+00:00",
-  "source_commit": "32a800eb7e97fbde8403809c00a6ca8d0eef9e6e",
+  "generated_at": "2026-08-26T17:05:20+00:00",
+  "source_commit": "3ea9b1b496eddc9398688205fa8aeedb65db511a",
   "parsers": [
     {
       "id": "it.a2aenergia.energy",
@@ -147,6 +147,23 @@
       "path": "parsers/it/tim/internet.yaml",
       "sha256": "b41ea578208999d254d8c439bc983385b54a7acefc9f9de6fc21990b149f1951",
       "size": 3369
+    },
+    {
+      "id": "it.tim.telecom",
+      "version": 1,
+      "name": "TIM",
+      "country": "IT",
+      "language": "it",
+      "provider": "TIM",
+      "bill_type": "internet",
+      "quality": "experimental",
+      "status": "outdated",
+      "parser_schema": 1,
+      "min_billy_version": "0.6.0",
+      "path": "parsers/it/tim/telecom.yaml",
+      "sha256": "13abd83e12c1b12f119f297a69e18cf8f962c2f3e831f92cc851e187d3d5564f",
+      "size": 1404,
+      "replacement": "it.tim.internet"
     }
   ]
 }
