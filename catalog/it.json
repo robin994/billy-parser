@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "country": "IT",
-  "generated_at": "2026-08-26T19:19:59+00:00",
-  "source_commit": "8a6b573124d6d5b8d42948ced61bb04f4e8b6cff",
+  "generated_at": "2026-08-26T19:22:04+00:00",
+  "source_commit": "aab73d442a6bcff8b402e37a5f3d9ad1cea08baa",
   "parsers": [
     {
       "id": "it.a2aenergia.energy",
