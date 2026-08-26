@@ -135,6 +135,20 @@ def _semantic_validate(parser: dict, path: Path) -> None:
             _compile_regex(str(candidate.get("regex") or ""), path)
 
 
+def _catalog_status(metadata: dict) -> str:
+    """Return the parser lifecycle state exposed by parser.json.
+
+    Quality describes confidence in the parser. The catalog status describes whether
+    users should treat it as active, experimental, or deprecated. Existing verified
+    and tested parsers remain active by default.
+    """
+    if bool(metadata.get("deprecated")):
+        return "deprecated"
+    if str(metadata.get("quality") or "") == "experimental":
+        return "experimental"
+    return "active"
+
+
 def build_catalog(root: Path | None = None) -> dict:
     root = Path(root or ROOT)
     schema_path = root / "schema" / "parser.schema.json"
@@ -179,6 +193,7 @@ def build_catalog(root: Path | None = None) -> dict:
             "provider": metadata["provider"],
             "bill_type": metadata["bill_type"],
             "quality": metadata["quality"],
+            "status": _catalog_status(metadata),
             "parser_schema": int(parser["schema"]),
             "min_billy_version": metadata["min_billy_version"],
             "path": path.relative_to(root).as_posix(),

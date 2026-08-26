@@ -18,6 +18,7 @@ No repository secret, PAT, OAuth client secret or GitHub App private key is requ
 3. The contributor submits the issue using their normal GitHub session.
 4. GitHub Actions validates the issue author and YAML.
 5. A new parser is forced to `metadata.quality: experimental` and `metadata.submitted_by` is set from the issue author.
+6. The generated catalog exposes it with `status: experimental`; promotion or deprecation changes that lifecycle status without changing the provider path.
 6. The parser is committed to `main`.
 7. `parser.json` is rebuilt with `source_commit` pinned to the immutable parser commit SHA.
 8. The bot comments on and closes the issue.

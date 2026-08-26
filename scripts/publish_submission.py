@@ -208,6 +208,7 @@ def publish_submission(root: Path, author: str, body: str) -> dict[str, Any]:
         "author": author,
         "update": is_update,
         "quality": "experimental",
+        "status": "experimental",
     }
 
 

@@ -14,6 +14,16 @@ Every parser has a `metadata.quality` value:
 
 Community submissions can create or update **experimental** parsers without maintainer approval. `tested` and `verified` are protected from the automatic publishing channel.
 
+## Catalog status
+
+`parser.json` exposes a generated `status` for every parser:
+
+- `active` — normal catalog entry (`tested` or `verified`);
+- `experimental` — parser in the experimental pool (`metadata.quality: experimental`);
+- `deprecated` — parser explicitly deprecated in metadata.
+
+`quality` and `status` intentionally remain separate: quality records confidence, while status records the parser lifecycle. Experimental submissions are therefore automatically grouped in the catalog without changing the country/provider/type directory layout.
+
 ## Publish from Billy
 
 Billy can generate a GitHub submission for a locally saved custom parser. The browser opens a pre-filled GitHub issue; after the user submits it, GitHub Actions validates the YAML and, if valid, publishes it automatically to `main` and rebuilds `parser.json`.
