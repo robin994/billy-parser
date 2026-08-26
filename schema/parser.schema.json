@@ -36,6 +36,7 @@
         "language",
         "provider",
         "bill_type",
+        "quality",
         "min_billy_version"
       ],
       "properties": {
@@ -69,6 +70,31 @@
         "min_billy_version": {
           "type": "string",
           "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "quality": {
+          "type": "string",
+          "enum": [
+            "experimental",
+            "tested",
+            "verified"
+          ]
+        },
+        "submitted_by": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$",
+          "maxLength": 39
+        },
+        "changelog": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "deprecated": {
+          "type": "boolean"
+        },
+        "replacement": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)+$",
+          "maxLength": 120
         }
       }
     },

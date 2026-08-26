@@ -9,6 +9,7 @@ metadata:
   provider: E.ON Energia
   bill_type: electricity
   homepage: https://www.eon-energia.com/
+  quality: verified
   min_billy_version: 0.6.0
 
 # Privacy-first check. Billy evaluates this only against metadata already emitted

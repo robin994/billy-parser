@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-25T21:24:14+00:00",
+  "generated_at": "2026-08-26T09:15:41+00:00",
   "source_commit": "main",
   "parsers": [
     {
@@ -11,11 +11,12 @@
       "language": "it",
       "provider": "E.ON Energia",
       "bill_type": "electricity",
+      "quality": "verified",
       "parser_schema": 1,
       "min_billy_version": "0.6.0",
       "path": "parsers/it/eon/electricity.yaml",
-      "sha256": "9c9a71ae7b194fbd8c6b203713f75d74f384f14dff57bdf742e9a92153ff88e3",
-      "size": 4450
+      "sha256": "5922dd2b1cddbb93f697aae9e7f926fdc9d0b87e4f24335aaa3b65361d873291",
+      "size": 4470
     },
     {
       "id": "it.tim.internet",
@@ -25,11 +26,12 @@
       "language": "it",
       "provider": "TIM",
       "bill_type": "internet",
+      "quality": "verified",
       "parser_schema": 1,
       "min_billy_version": "0.6.3",
       "path": "parsers/it/tim/internet.yaml",
-      "sha256": "0adc265fe0020439d0cf1b5c0f25af96289542e0d92fada6cb29f2612ea1abcb",
-      "size": 3330
+      "sha256": "468e5cb4aa7216e905026b9ecfb943be7228062324e6614bbcdb4865ee6f50a7",
+      "size": 3350
     }
   ]
 }
