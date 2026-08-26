@@ -19,9 +19,9 @@ No repository secret, PAT, OAuth client secret or GitHub App private key is requ
 4. GitHub Actions validates the issue author and YAML.
 5. A new parser is forced to `metadata.status: experimental`; `metadata.quality: experimental` is also written for compatibility and `metadata.submitted_by` is set from the issue author.
 6. Promotion changes only `metadata.status` to `verified`; obsolete parsers become `outdated`. The parser stays in the same country/provider/type path.
-6. The parser is committed to `main`.
-7. `parser.json` is rebuilt with `source_commit` pinned to the immutable parser commit SHA.
-8. The bot comments on and closes the issue.
+7. The parser is committed to `main`.
+8. Catalog v2 (`catalog/index.json` + country shards) and legacy `parser.json` are rebuilt with `source_commit` pinned to the immutable parser commit SHA.
+9. The bot comments on and closes the issue.
 
 If validation fails, the bot comments with the reason. Editing the issue automatically retries validation.
 
@@ -29,7 +29,7 @@ If validation fails, the bot comments with the reason. Editing the issue automat
 
 The automatic channel cannot:
 
-- update `tested` or `verified` parsers;
+- update `verified` or `outdated` parsers;
 - update another contributor's experimental parser;
 - lower/reuse an existing version;
 - choose its own owner;

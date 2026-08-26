@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Billy parser YAML files and build parser.json."""
+"""Validate Billy parser YAML files and build legacy + sharded catalogs."""
 from __future__ import annotations
 
 import argparse
@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_PATH = ROOT / "schema" / "parser.schema.json"
 PARSERS_DIR = ROOT / "parsers"
 CATALOG_PATH = ROOT / "parser.json"
+CATALOG_DIR = ROOT / "catalog"
 
 SENSITIVE_STATIC_FIELDS = {
     "invoice_number",
@@ -209,6 +210,68 @@ def build_catalog(root: Path | None = None) -> dict:
     }
 
 
+def build_catalog_v2(catalog: dict) -> tuple[dict, dict[str, dict]]:
+    """Split one validated catalog into a small index and country shards."""
+    generated_at = str(catalog["generated_at"])
+    source_commit = str(catalog["source_commit"])
+    grouped: dict[str, list[dict]] = {}
+
+    for parser in catalog["parsers"]:
+        country = str(parser["country"]).upper()
+        grouped.setdefault(country, []).append(parser)
+
+    shards: dict[str, dict] = {}
+    countries: dict[str, dict] = {}
+    for country in sorted(grouped):
+        parsers = sorted(grouped[country], key=lambda item: str(item["id"]))
+        shards[country] = {
+            "schema_version": 2,
+            "country": country,
+            "generated_at": generated_at,
+            "source_commit": source_commit,
+            "parsers": parsers,
+        }
+        countries[country] = {
+            "path": f"catalog/{country.casefold()}.json",
+            "parsers": len(parsers),
+        }
+
+    index = {
+        "schema_version": 2,
+        "generated_at": generated_at,
+        "source_commit": source_commit,
+        "countries": countries,
+    }
+    return index, shards
+
+
+def write_catalogs(catalog: dict, root: Path | None = None) -> None:
+    """Write Catalog v2 plus parser.json for legacy Billy clients."""
+    root = Path(root or ROOT)
+    catalog_path = root / "parser.json"
+    catalog_dir = root / "catalog"
+    index, shards = build_catalog_v2(catalog)
+
+    catalog_path.write_text(
+        json.dumps(catalog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+    catalog_dir.mkdir(parents=True, exist_ok=True)
+
+    expected = {f"{country.casefold()}.json" for country in shards}
+    for stale in catalog_dir.glob("*.json"):
+        if stale.name != "index.json" and stale.name not in expected:
+            stale.unlink()
+
+    for country, shard in shards.items():
+        (catalog_dir / f"{country.casefold()}.json").write_text(
+            json.dumps(shard, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+
+    (catalog_dir / "index.json").write_text(
+        json.dumps(index, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+
+
 def _semantic_validate_for_root(parser: dict, path: Path, root: Path) -> None:
     """Temporary-root variant used by publisher tests."""
     global ROOT
@@ -232,14 +295,17 @@ def main() -> int:
         return 1
 
     if args.check:
-        # Pull requests validate source parsers only. parser.json is generated on
-        # main by GitHub Actions, so contributors never need to commit generated
-        # catalog changes by hand.
+        # Pull requests validate source parsers only. Generated catalogs are built
+        # on main by GitHub Actions, so contributors do not edit them by hand.
         print(f"Validated {len(catalog['parsers'])} parser(s)")
         return 0
 
-    CATALOG_PATH.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"Wrote {CATALOG_PATH.relative_to(ROOT)} with {len(catalog['parsers'])} parser(s)")
+    write_catalogs(catalog)
+    _, shards = build_catalog_v2(catalog)
+    print(
+        f"Wrote {CATALOG_PATH.relative_to(ROOT)} and {len(shards)} country shard(s) "
+        f"with {len(catalog['parsers'])} parser(s)"
+    )
     return 0
 
 

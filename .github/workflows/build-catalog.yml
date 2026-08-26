@@ -25,13 +25,13 @@ jobs:
           python-version: '3.13'
       - run: python -m pip install -r requirements-dev.txt
       - run: python scripts/build_catalog.py
-      - name: Commit generated catalog
+      - name: Commit generated catalogs
         run: |
-          if git diff --quiet -- parser.json; then
+          if git diff --quiet -- parser.json catalog; then
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add parser.json
-          git commit -m 'chore: update parser catalog'
+          git add parser.json catalog
+          git commit -m 'chore: update parser catalogs'
           git push

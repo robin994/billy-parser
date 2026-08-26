@@ -18,6 +18,41 @@ def test_catalog_validates():
     assert any(item["status"] == "verified" for item in catalog["parsers"])
 
 
+def test_catalog_v2_groups_parsers_by_country():
+    legacy = {
+        "generated_at": "2026-08-26T00:00:00+00:00",
+        "source_commit": "abc123",
+        "parsers": [
+            {"id": "it.demo.energy", "country": "IT"},
+            {"id": "fr.demo.energy", "country": "FR"},
+            {"id": "it.other.internet", "country": "IT"},
+        ],
+    }
+
+    index, shards = MODULE.build_catalog_v2(legacy)
+
+    assert index["schema_version"] == 2
+    assert index["countries"] == {
+        "FR": {"path": "catalog/fr.json", "parsers": 1},
+        "IT": {"path": "catalog/it.json", "parsers": 2},
+    }
+    assert [item["id"] for item in shards["IT"]["parsers"]] == [
+        "it.demo.energy",
+        "it.other.internet",
+    ]
+    assert [item["id"] for item in shards["FR"]["parsers"]] == ["fr.demo.energy"]
+
+
+def test_catalog_v2_current_repo_exposes_only_italian_shard():
+    catalog = MODULE.build_catalog()
+    index, shards = MODULE.build_catalog_v2(catalog)
+
+    assert index["countries"]["IT"]["path"] == "catalog/it.json"
+    assert index["countries"]["IT"]["parsers"] == len(catalog["parsers"])
+    assert set(shards) == {"IT"}
+    assert all(item["country"] == "IT" for item in shards["IT"]["parsers"])
+
+
 def test_catalog_status_tracks_parser_lifecycle():
     assert MODULE._catalog_status({"status": "verified"}) == "verified"
     assert MODULE._catalog_status({"status": "experimental"}) == "experimental"
