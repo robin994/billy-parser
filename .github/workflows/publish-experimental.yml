@@ -1,0 +1,128 @@
+name: Publish experimental parser
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: billy-parser-community-publisher
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: contains(github.event.issue.body || '', '<!-- billy-parser-submission:v1 -->')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout trusted repository code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Install validator dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Validate community submission
+        id: publish
+        continue-on-error: true
+        run: |
+          python scripts/publish_submission.py \
+            --event "$GITHUB_EVENT_PATH" \
+            --result "$RUNNER_TEMP/billy-submission-result.json"
+
+      - name: Read validation result
+        id: result
+        if: always()
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          path = Path(os.environ['RUNNER_TEMP']) / 'billy-submission-result.json'
+          data = json.loads(path.read_text()) if path.exists() else {
+              'ok': False,
+              'message': 'Submission validator stopped before producing a result.'
+          }
+          out = Path(os.environ['GITHUB_OUTPUT'])
+          with out.open('a', encoding='utf-8') as handle:
+              for key in ('ok', 'message', 'parser_id', 'version', 'path', 'author', 'update'):
+                  value = str(data.get(key, '')).replace('\r', ' ').replace('\n', ' | ')
+                  handle.write(f'{key}={value}\n')
+
+      - name: Stop invalid submission
+        if: steps.publish.outcome != 'success'
+        uses: actions/github-script@v7
+        env:
+          RESULT_MESSAGE: ${{ steps.result.outputs.message }}
+        with:
+          script: |
+            const message = process.env.RESULT_MESSAGE;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `❌ **Billy parser validation failed**\n\n${message}\n\nEdit this issue to retry automatically.`
+            });
+            core.setFailed(message);
+
+      - name: Commit validated parser
+        if: steps.publish.outcome == 'success'
+        id: parser_commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "${{ steps.result.outputs.path }}"
+          git commit -m "community: publish ${{ steps.result.outputs.parser_id }} v${{ steps.result.outputs.version }} (#${{ github.event.issue.number }})"
+          git push origin HEAD:main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Build immutable catalog
+        if: steps.publish.outcome == 'success'
+        env:
+          BILLY_SOURCE_COMMIT: ${{ steps.parser_commit.outputs.sha }}
+        run: python scripts/build_catalog.py
+
+      - name: Commit generated catalog
+        if: steps.publish.outcome == 'success'
+        id: catalog_commit
+        run: |
+          git add parser.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: update parser catalog (#${{ github.event.issue.number }})"
+            git push origin HEAD:main
+          fi
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Confirm publication
+        if: steps.publish.outcome == 'success'
+        uses: actions/github-script@v7
+        env:
+          PARSER_ID: ${{ steps.result.outputs.parser_id }}
+          PARSER_VERSION: ${{ steps.result.outputs.version }}
+          PARSER_OWNER: ${{ steps.result.outputs.author }}
+          PARSER_SHA: ${{ steps.parser_commit.outputs.sha }}
+        with:
+          script: |
+            const parserId = process.env.PARSER_ID;
+            const version = process.env.PARSER_VERSION;
+            const owner = process.env.PARSER_OWNER;
+            const parserSha = process.env.PARSER_SHA;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `✅ **Published automatically**\n\n\`${parserId}\` v${version} is now in the catalog as **Experimental** and owned by @${owner}.\n\nParser commit: \`${parserSha.slice(0, 12)}\``
+            });
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            });
