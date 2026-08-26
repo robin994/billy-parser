@@ -36,7 +36,7 @@
         "language",
         "provider",
         "bill_type",
-        "quality",
+        "status",
         "min_billy_version"
       ],
       "properties": {
@@ -95,6 +95,14 @@
           "type": "string",
           "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)+$",
           "maxLength": 120
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "experimental",
+            "verified",
+            "outdated"
+          ]
         }
       }
     },

@@ -4,15 +4,15 @@ Community-maintained declarative parser definitions for [Billy](https://github.c
 
 Billy downloads `parser.json` to discover available parsers and downloads a parser YAML only when a user installs it. Parsers cannot execute Python, JavaScript or shell commands and cannot perform network or filesystem operations.
 
-## Parser quality
+## Parser lifecycle
 
-Every parser has a `metadata.quality` value:
+Every parser lives in the normal country/provider/type tree and carries a `metadata.status` value:
 
-- `experimental` — community published, automatically validated, not yet broadly verified on real bills.
-- `tested` — manually promoted after successful testing on real anonymized samples.
-- `verified` — manually promoted after broader validation across multiple bills/templates.
+- `experimental` — parser available for community testing;
+- `verified` — parser confirmed by users on real bills;
+- `outdated` — parser is obsolete or no longer matches the provider format.
 
-Community submissions can create or update **experimental** parsers without maintainer approval. `tested` and `verified` are protected from the automatic publishing channel.
+There is no separate experimental directory. Promotion only changes `metadata.status`; the parser path and ID remain stable. `metadata.quality` is kept temporarily for compatibility with existing Billy clients, but it is no longer the lifecycle source of truth.
 
 ## Publish from Billy
 
@@ -25,8 +25,8 @@ No invoice, email body or attachment is uploaded by Billy. Only the parser YAML 
 - New parser: published as `experimental`, owner is taken from the GitHub issue author.
 - Update: only the original GitHub owner can update that experimental parser.
 - Version must increase.
-- Experimental submissions cannot modify `tested` or `verified` parsers.
-- The workflow injects `metadata.quality: experimental` and `metadata.submitted_by`; values supplied by the issue body are never trusted for promotion or ownership.
+- Experimental submissions cannot modify parsers whose status is `verified` or `outdated`.
+- The workflow injects `metadata.status: experimental`, compatibility `metadata.quality: experimental`, and `metadata.submitted_by`; values supplied by the issue body are never trusted for promotion or ownership.
 
 ## Automatic validation
 

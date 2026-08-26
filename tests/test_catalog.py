@@ -12,3 +12,15 @@ def test_catalog_validates():
     catalog = MODULE.build_catalog()
     assert catalog["schema_version"] == 1
     assert any(item["id"] == "it.eon.electricity" for item in catalog["parsers"])
+    statuses = {item["status"] for item in catalog["parsers"]}
+    assert statuses <= {"experimental", "verified", "outdated"}
+    assert any(item["status"] == "experimental" for item in catalog["parsers"])
+    assert any(item["status"] == "verified" for item in catalog["parsers"])
+
+
+def test_catalog_status_tracks_parser_lifecycle():
+    assert MODULE._catalog_status({"status": "verified"}) == "verified"
+    assert MODULE._catalog_status({"status": "experimental"}) == "experimental"
+    assert MODULE._catalog_status({"status": "outdated"}) == "outdated"
+    assert MODULE._catalog_status({"quality": "experimental"}) == "experimental"
+    assert MODULE._catalog_status({"deprecated": True}) == "outdated"

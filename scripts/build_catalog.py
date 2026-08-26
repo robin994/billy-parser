@@ -92,18 +92,10 @@ def _semantic_validate(parser: dict, path: Path) -> None:
     metadata = parser.get("metadata", {})
     parser_id = str(parser.get("id") or "")
     country = str(metadata.get("country") or "")
-    quality = str(metadata.get("quality") or "")
-    submitted_by = str(metadata.get("submitted_by") or "").strip()
-
     if parser_id and country and parser_id.split(".", 1)[0] != country.casefold():
         raise ValueError(
             f"{path.relative_to(ROOT)}: parser id must start with the lowercase country code"
         )
-    if quality == "experimental" and not submitted_by:
-        raise ValueError(
-            f"{path.relative_to(ROOT)}: experimental parsers require metadata.submitted_by"
-        )
-
     documents = {"email"}
     for attachment in parser.get("documents", {}).get("attachments", []) or []:
         document_id = str(attachment.get("id") or "")
@@ -133,6 +125,22 @@ def _semantic_validate(parser: dict, path: Path) -> None:
                     f"{path.relative_to(ROOT)}: field {field_name!r} references undeclared document {source!r}"
                 )
             _compile_regex(str(candidate.get("regex") or ""), path)
+
+
+def _catalog_status(metadata: dict) -> str:
+    """Return the parser lifecycle state exposed by parser.json.
+
+    status is the source of truth. The fallbacks keep old parser definitions readable
+    while repositories migrate away from quality/deprecated as lifecycle markers.
+    """
+    status = str(metadata.get("status") or "").strip().casefold()
+    if status in {"experimental", "verified", "outdated"}:
+        return status
+    if bool(metadata.get("deprecated")):
+        return "outdated"
+    if str(metadata.get("quality") or "") == "experimental":
+        return "experimental"
+    return "verified"
 
 
 def build_catalog(root: Path | None = None) -> dict:
@@ -178,7 +186,10 @@ def build_catalog(root: Path | None = None) -> dict:
             "language": metadata["language"],
             "provider": metadata["provider"],
             "bill_type": metadata["bill_type"],
-            "quality": metadata["quality"],
+            "quality": metadata.get(
+                "quality", "experimental" if _catalog_status(metadata) == "experimental" else "verified"
+            ),
+            "status": _catalog_status(metadata),
             "parser_schema": int(parser["schema"]),
             "min_billy_version": metadata["min_billy_version"],
             "path": path.relative_to(root).as_posix(),

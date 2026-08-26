@@ -112,6 +112,7 @@ def _validate_submission(root: Path, parser: dict[str, Any], author: str) -> tup
 
     # Community submissions can never self-promote. Ownership is injected from
     # github.event.issue.user.login, never trusted from the submitted YAML.
+    metadata["status"] = "experimental"
     metadata["quality"] = "experimental"
     metadata["submitted_by"] = author
 
@@ -133,7 +134,8 @@ def _validate_submission(root: Path, parser: dict[str, Any], author: str) -> tup
     if is_update:
         existing_path, old = existing[parser_id]
         old_meta = old.get("metadata") or {}
-        if str(old_meta.get("quality") or "") != "experimental":
+        old_status = _BUILD._catalog_status(old_meta)
+        if old_status != "experimental":
             raise SubmissionError("Only experimental community parsers can be updated through this channel")
         owner = str(old_meta.get("submitted_by") or "")
         if owner.casefold() != author.casefold():
@@ -208,6 +210,7 @@ def publish_submission(root: Path, author: str, body: str) -> dict[str, Any]:
         "author": author,
         "update": is_update,
         "quality": "experimental",
+        "status": "experimental",
     }
 
 

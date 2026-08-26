@@ -9,6 +9,7 @@ metadata:
   provider: TIM
   bill_type: internet
   homepage: https://www.tim.it/
+  status: verified
   quality: verified
   min_billy_version: 0.6.3
 
