@@ -75,6 +75,7 @@ def _body(parser: dict) -> str:
 def test_new_submission_is_forced_experimental_and_owned(tmp_path: Path):
     root = _repo(tmp_path)
     parser = _parser()
+    parser["metadata"]["status"] = "verified"
     parser["metadata"]["quality"] = "verified"
     parser["metadata"]["submitted_by"] = "someone-else"
 
@@ -84,6 +85,7 @@ def test_new_submission_is_forced_experimental_and_owned(tmp_path: Path):
     assert result["quality"] == "experimental"
     assert result["status"] == "experimental"
     saved = yaml.safe_load((root / result["path"]).read_text())
+    assert saved["metadata"]["status"] == "experimental"
     assert saved["metadata"]["quality"] == "experimental"
     assert saved["metadata"]["submitted_by"] == "alice"
     catalog = MODULE._BUILD.build_catalog(root)

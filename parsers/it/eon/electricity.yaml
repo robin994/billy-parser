@@ -9,6 +9,7 @@ metadata:
   provider: E.ON Energia
   bill_type: electricity
   homepage: https://www.eon-energia.com/
+  status: verified
   quality: verified
   min_billy_version: 0.6.0
 

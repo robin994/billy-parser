@@ -1,0 +1,90 @@
+schema: 1
+id: it.heracomm.energy
+version: 1
+metadata:
+  name: Hera Comm
+  country: IT
+  language: it
+  provider: Hera Comm
+  bill_type: energy
+  min_billy_version: 0.6.0
+  status: experimental
+  quality: experimental
+prefilter:
+  email:
+    subject_regex:
+      - '(?i)\bhera(?:\s+comm)?\b'
+detection:
+  threshold: 60
+  rules:
+    - source: email.subject
+      regex: '(?i)\bhera(?:\s+comm)?\b'
+      weight: 40
+    - source: email.body
+      regex: '(?i)\bhera\s+comm\b'
+      weight: 60
+    - source: attachment.filename
+      regex: '(?i)(?:hera|bolletta|fattura).*\.pdf$'
+      weight: 10
+documents:
+  email:
+    enabled: true
+  attachments:
+    - id: bill_pdf
+      required: false
+      mime_types: [application/pdf]
+      filename_regex: '(?i).*\.pdf$'
+      extractor: pdf_text
+fields:
+  provider:
+    value: Hera Comm
+  currency:
+    value: EUR
+  amount:
+    required: true
+    candidates:
+      - source: email
+        regex: '(?i)(?:totale\s+da\s+pagare|importo\s+da\s+pagare|totale\s+(?:bolletta|fattura))\s*[:€\s]*?(?P<value>\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2})'
+      - source: bill_pdf
+        regex: '(?i)(?:totale\s+da\s+pagare|importo\s+da\s+pagare|totale\s+(?:bolletta|fattura))\s*[:€\s]*?(?P<value>\d{1,3}(?:\.\d{3})*,\d{2}|\d+,\d{2})'
+    transform:
+      type: decimal
+      locale: it_IT
+  invoice_number:
+    candidates:
+      - source: bill_pdf
+        regex: '(?i)(?:numero\s+fattura|fattura\s+n\.?|n\.?\s*fattura)\s*[:#]?\s*(?P<value>[A-Z0-9][A-Z0-9./_-]{2,})'
+  issue_date:
+    candidates:
+      - source: bill_pdf
+        regex: '(?i)(?:data\s+(?:di\s+)?emissione|data\s+fattura|emessa\s+il)\s*:?\s*(?P<value>\d{1,2}[./-]\d{1,2}[./-]\d{4})'
+    transform:
+      type: date
+      locale: it_IT
+  due_date:
+    candidates:
+      - source: email
+        regex: '(?i)(?:data\s+di\s+scadenza|scadenza|entro\s+il)\s*:?\s*(?P<value>\d{1,2}[./-]\d{1,2}[./-]\d{4})'
+      - source: bill_pdf
+        regex: '(?i)(?:data\s+di\s+scadenza|scadenza|entro\s+il)\s*:?\s*(?P<value>\d{1,2}[./-]\d{1,2}[./-]\d{4})'
+    transform:
+      type: date
+      locale: it_IT
+  period:
+    outputs: [period_start, period_end]
+    candidates:
+      - source: bill_pdf
+        regex: '(?i)(?:periodo\s+(?:di\s+)?riferimento|periodo|competenza)\s*:?\s*(?P<start>\d{1,2}[./-]\d{1,2}[./-]\d{4})\s*(?:-|–|al)\s*(?P<end>\d{1,2}[./-]\d{1,2}[./-]\d{4})'
+    transform:
+      type: date_range
+      locale: it_IT
+  consumption:
+    candidates:
+      - source: bill_pdf
+        regex: '(?i)(?:consumo\s+totale|consumi\s+nel\s+periodo|consumo)\s*:?\s*(?P<value>\d{1,3}(?:\.\d{3})*(?:,\d+)?|\d+(?:,\d+)?)\s*(?:kWh|Smc)'
+    transform:
+      type: decimal
+      locale: it_IT
+verification:
+  - field: amount
+    sources: [email, bill_pdf]
