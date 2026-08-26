@@ -1,0 +1,128 @@
+schema: 1
+id: it.test.internet
+version: 2
+metadata:
+  name: TIM - Linea fissa
+  country: IT
+  language: it
+  provider: TIM
+  bill_type: internet
+  homepage: https://www.tim.it/
+  status: experimental
+  quality: experimental
+  min_billy_version: 0.6.3
+  submitted_by: robin994
+prefilter:
+  email:
+    from:
+    - servizioclienti@telecomitalia.it
+    subject_contains:
+    - fattura tim
+detection:
+  threshold: 70
+  rules:
+  - source: email.from
+    equals: servizioclienti@telecomitalia.it
+    weight: 40
+  - source: email.subject
+    regex: (?i)fattura\s+tim\s+(?:linea\s+)?fissa
+    weight: 30
+  - source: email.body
+    regex: (?i)fattura\s+mensile\s+TIM
+    weight: 15
+  - source: attachment.mime_type
+    equals: application/pdf
+    weight: 5
+  - source: attachment.mime_type
+    equals: application/octet-stream
+    weight: 5
+  - source: attachment.filename
+    regex: (?i)^FATTURA_.*\.pdf$
+    weight: 10
+documents:
+  email:
+    enabled: true
+  attachments:
+  - id: invoice
+    mime_types:
+    - application/pdf
+    - application/octet-stream
+    filename_regex: (?i)^FATTURA_.*\.pdf$
+    extractor: pdf_text
+    required: true
+fields:
+  provider:
+    value: TIM
+  bill_type:
+    value: internet
+  currency:
+    value: EUR
+  invoice_number:
+    required: true
+    candidates:
+    - source: invoice
+      regex: (?i)Numero\s+fattura:\s*(?P<value>[A-Z]{1,5}\d{6,})
+    - source: invoice
+      regex: (?i)Fattura\s+n\.?\s*:\s*(?P<value>[A-Z]{1,5}\d{6,})
+    transform:
+      type: text
+  issue_date:
+    required: true
+    candidates:
+    - source: invoice
+      regex: (?i)Data\s+emissione:\s*(?P<value>\d{2}/\d{2}/\d{4})
+    - source: invoice
+      regex: (?i)Fattura\s+n\.?\s*:\s*[A-Z0-9]+\s+del\s+(?P<value>\d{2}/\d{2}/\d{4})
+    transform:
+      type: date
+      locale: it_IT
+  amount:
+    required: true
+    candidates:
+    - source: invoice
+      regex: (?i)Totale\s+da\s+pagare\s*€\s*(?P<value>[0-9.,]+)
+    - source: invoice
+      regex: (?i)Offerta\s+TIM\s+Totale\s+(?P<value>[0-9.,]+)
+    transform:
+      type: decimal
+      locale: it_IT
+  due_date:
+    required: true
+    candidates:
+    - source: invoice
+      regex: (?i)RATA\s+UNICA\s+entro\s+il\s+(?P<value>\d{2}/\d{2}/\d{4})
+    - source: email
+      regex: (?i)scadenza\s+(?P<value>\d{2}/\d{2}/\d{4})
+    transform:
+      type: date
+      locale: it_IT
+  offer:
+    candidates:
+    - source: invoice
+      regex: (?im)^(?P<value>[^\n]{3,80}?)\s+\d{1,2}\s+[a-z]{3}\s+\d{2}\s*-\s*\d{1,2}\s+[a-z]{3}\s+\d{2}\s+\d{1,2}%\s+[0-9.,]+\s*$
+    transform:
+      type: text
+  payment_method:
+    candidates:
+    - source: invoice
+      regex: (?is)Importo\s+addebitato\s+salvo\s+buon\s+fine\s+su\s+(?P<value>conto\s+corrente)
+    transform:
+      type: text
+  period:
+    required: true
+    outputs:
+    - period_start
+    - period_end
+    candidates:
+    - source: invoice
+      regex: (?i)(?P<start>\d{1,2}\s+[a-z]{3}\s+\d{2})\s*-\s*(?P<end>\d{1,2}\s+[a-z]{3}\s+\d{2})
+    transform:
+      type: date_range
+      locale: it_IT
+      start_group: start
+      end_group: end
+verification:
+- field: due_date
+  sources:
+  - email
+  - invoice
