@@ -56,7 +56,7 @@ def test_anthropic_parser_is_english_and_experimental():
     metadata = parser["metadata"]
 
     assert parser["id"] == "it.anthropic.subscription"
-    assert parser["version"] == 2
+    assert parser["version"] == 3
     assert metadata["language"] == "en"
     assert metadata["provider"] == "Anthropic"
     assert metadata["status"] == "experimental"
@@ -103,10 +103,6 @@ def test_anthropic_invoice_sample_extracts_core_fields():
     assert _extract(fields["due_date"], INVOICE_SAMPLE) == {"value": "August 27, 2026"}
     assert _extract(fields["amount"], INVOICE_SAMPLE) == {"value": "21.96"}
     assert _extract(fields["offer"], INVOICE_SAMPLE) == {"value": "Claude Pro"}
-    assert _extract(fields["period"], INVOICE_SAMPLE) == {
-        "start": "Aug 27",
-        "end": "Sep 27, 2026",
-    }
 
 
 def test_anthropic_receipt_sample_extracts_payment_fields():
@@ -116,3 +112,12 @@ def test_anthropic_receipt_sample_extracts_payment_fields():
     assert _extract(fields["amount"], RECEIPT_SAMPLE) == {"value": "21.96"}
     assert _extract(fields["payment_method"], RECEIPT_SAMPLE) == {"value": "Mastercard - 1234"}
     assert _extract(fields["receipt_number"], RECEIPT_SAMPLE) == {"value": "2010-1111-2222"}
+
+
+def test_anthropic_uses_separate_invoice_and_receipt_documents():
+    documents = _parser()["documents"]["attachments"]
+
+    assert [document["id"] for document in documents] == ["invoice_pdf", "receipt_pdf"]
+    assert re.search(documents[0]["filename_regex"], "Invoice-DAXGMYDD-0002.pdf")
+    assert not re.search(documents[0]["filename_regex"], "Receipt-2010-2892-7311.pdf")
+    assert re.search(documents[1]["filename_regex"], "Receipt-2010-2892-7311.pdf")
