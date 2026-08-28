@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "country": "IT",
-  "generated_at": "2026-08-26T19:22:04+00:00",
-  "source_commit": "aab73d442a6bcff8b402e37a5f3d9ad1cea08baa",
+  "generated_at": "2026-08-28T19:16:43+00:00",
+  "source_commit": "f40f27ab22b6451e0746d451569cc6a6f5501b75",
   "parsers": [
     {
       "id": "it.a2aenergia.energy",
@@ -19,6 +19,28 @@
       "path": "parsers/it/a2aenergia/energy.yaml",
       "sha256": "620e2936b9ebfa354684d68d3d13d56a462b6e42fbadfc93ec90347a3afd42d9",
       "size": 2745,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      }
+    },
+    {
+      "id": "it.anthropic.subscription",
+      "version": 1,
+      "name": "Anthropic - Claude subscription",
+      "country": "IT",
+      "language": "en",
+      "provider": "Anthropic",
+      "bill_type": "subscription",
+      "quality": "experimental",
+      "status": "experimental",
+      "parser_schema": 1,
+      "min_billy_version": "0.11.3",
+      "path": "parsers/it/anthropic/subscription.yaml",
+      "sha256": "8c9008c79164e2c9cfef0c2306db632a55a447cd22276229c1f594b015be2f65",
+      "size": 3814,
       "feedback": {
         "working": 0,
         "partial": 0,
