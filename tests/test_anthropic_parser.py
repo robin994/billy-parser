@@ -56,10 +56,43 @@ def test_anthropic_parser_is_english_and_experimental():
     metadata = parser["metadata"]
 
     assert parser["id"] == "it.anthropic.subscription"
+    assert parser["version"] == 2
     assert metadata["language"] == "en"
     assert metadata["provider"] == "Anthropic"
     assert metadata["status"] == "experimental"
     assert metadata["quality"] == "experimental"
+
+
+def test_anthropic_real_imap_event_matches_without_email_body():
+    parser = _parser()
+    event = {
+        "sender": "invoice+statements@mail.anthropic.com",
+        "subject": "Your receipt from Anthropic, PBC #2010-2892-7311",
+        "attachments": [
+            ("Invoice-DAXGMYDD-0002.pdf", "application/pdf"),
+            ("Receipt-2010-2892-7311.pdf", "application/pdf"),
+        ],
+    }
+
+    prefilter = parser["prefilter"]["email"]
+    assert event["sender"] in prefilter["from"]
+    assert any(re.search(pattern, event["subject"]) for pattern in prefilter["subject_regex"])
+
+    score = 0
+    for rule in parser["detection"]["rules"]:
+        matched = False
+        if rule["source"] == "email.from":
+            matched = event["sender"] == rule.get("equals")
+        elif rule["source"] == "email.subject" and "regex" in rule:
+            matched = re.search(rule["regex"], event["subject"]) is not None
+        elif rule["source"] == "attachment.filename" and "regex" in rule:
+            matched = any(re.search(rule["regex"], filename) for filename, _ in event["attachments"])
+        elif rule["source"] == "attachment.mime_type" and "equals" in rule:
+            matched = any(mime == rule["equals"] for _, mime in event["attachments"])
+        if matched:
+            score += rule["weight"]
+
+    assert score >= parser["detection"]["threshold"]
 
 
 def test_anthropic_invoice_sample_extracts_core_fields():

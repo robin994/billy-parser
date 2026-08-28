@@ -1,6 +1,6 @@
 schema: 1
 id: it.anthropic.subscription
-version: 1
+version: 2
 
 metadata:
   name: Anthropic - Claude subscription
@@ -15,25 +15,30 @@ metadata:
 
 prefilter:
   email:
+    from:
+      - invoice+statements@mail.anthropic.com
     subject_regex:
-      - '(?i)\b(?:claude|anthropic)\b'
-      - '(?i)\b(?:invoice|receipt)\b.*\b(?:claude|anthropic)\b|\b(?:claude|anthropic)\b.*\b(?:invoice|receipt)\b'
+      - '(?i)^Your\s+(?:receipt|invoice)\s+from\s+Anthropic(?:,\s*PBC)?\b'
+      - '(?i)\b(?:invoice|receipt)\b.*\bAnthropic\b'
 
 detection:
   threshold: 70
   rules:
+    - source: email.from
+      equals: invoice+statements@mail.anthropic.com
+      weight: 60
     - source: email.subject
-      regex: '(?i)\b(?:claude|anthropic)\b'
-      weight: 25
-    - source: email.body
-      regex: '(?i)\bAnthropic,?\s+PBC\b'
+      regex: '(?i)^Your\s+(?:receipt|invoice)\s+from\s+Anthropic(?:,\s*PBC)?\b'
       weight: 35
     - source: email.body
+      regex: '(?i)\bAnthropic,?\s+PBC\b'
+      weight: 20
+    - source: email.body
       regex: '(?i)\bClaude\s+(?:Pro|Max|Team|Enterprise)\b'
-      weight: 25
+      weight: 20
     - source: attachment.filename
       regex: '(?i)^(?:Invoice|Receipt)-[A-Z0-9-]+\.pdf$'
-      weight: 25
+      weight: 20
     - source: attachment.mime_type
       equals: application/pdf
       weight: 5
