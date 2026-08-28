@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-28T19:45:53+00:00",
-  "source_commit": "62a69e3b86fb2c11d6ffaa35557da17671f36ced",
+  "generated_at": "2026-08-28T19:46:15+00:00",
+  "source_commit": "a622b4eeab53637ddb18e59e287eee8676d3a743",
   "parsers": [
     {
       "id": "it.a2aenergia.energy",
