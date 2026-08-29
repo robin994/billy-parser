@@ -1,0 +1,10 @@
+{
+  "community_verified": false,
+  "parser_id": "it.anthropic.subscription",
+  "schema_version": 1,
+  "updated_at": "2026-08-29T06:18:09+00:00",
+  "version": 3,
+  "votes": {
+    "34775dda693affc6820990b4d2516f06d8dec0b58786af0337296fd0326894ff": "working"
+  }
+}
