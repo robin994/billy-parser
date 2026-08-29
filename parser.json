@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-28T19:46:15+00:00",
-  "source_commit": "a622b4eeab53637ddb18e59e287eee8676d3a743",
+  "generated_at": "2026-08-29T06:18:15+00:00",
+  "source_commit": "6fd0feb1902b46f13489d999f9496130793248a1",
   "parsers": [
     {
       "id": "it.a2aenergia.energy",
@@ -41,10 +41,10 @@
       "sha256": "47656a25650aaed70dc887b8e03602e084eecc61885425d967be700768b5e6d2",
       "size": 4104,
       "feedback": {
-        "working": 0,
+        "working": 1,
         "partial": 0,
         "failed": 0,
-        "contributors": 0
+        "contributors": 1
       }
     },
     {
