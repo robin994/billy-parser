@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "country": "IT",
-  "generated_at": "2026-08-29T06:18:15+00:00",
-  "source_commit": "6fd0feb1902b46f13489d999f9496130793248a1",
+  "generated_at": "2026-09-20T04:42:44+00:00",
+  "source_commit": "c2bd59e1a0c90ea13e76c2d3bb0b25b9a35d8b4b",
   "parsers": [
     {
       "id": "it.a2aenergia.energy",
@@ -47,6 +47,29 @@
         "failed": 0,
         "contributors": 1
       }
+    },
+    {
+      "id": "it.ausino.water",
+      "version": 1,
+      "name": "Ausino S.p.A. - Servizio Idrico Integrato",
+      "country": "IT",
+      "language": "it",
+      "provider": "Ausino S.p.A.",
+      "bill_type": "water",
+      "quality": "experimental",
+      "status": "experimental",
+      "parser_schema": 1,
+      "min_billy_version": "0.12.3",
+      "path": "parsers/it/ausino/water.yaml",
+      "sha256": "5c2e6d4fa04d039b9e3c6029842c76c6da24ad84fc2ec2c8d6632af602dca133",
+      "size": 3238,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      },
+      "submitted_by": "robin994"
     },
     {
       "id": "it.edisonenergia.energy",

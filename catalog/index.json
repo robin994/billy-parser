@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-29T06:18:15+00:00",
-  "source_commit": "6fd0feb1902b46f13489d999f9496130793248a1",
+  "generated_at": "2026-09-20T04:42:44+00:00",
+  "source_commit": "c2bd59e1a0c90ea13e76c2d3bb0b25b9a35d8b4b",
   "countries": {
     "IT": {
       "path": "catalog/it.json",
-      "parsers": 10
+      "parsers": 11
     }
   }
 }
