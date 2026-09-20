@@ -1,0 +1,131 @@
+schema: 1
+id: it.ausino.water
+version: 1
+metadata:
+  name: Ausino S.p.A. - Servizio Idrico Integrato
+  country: IT
+  language: it
+  provider: Ausino S.p.A.
+  bill_type: water
+  min_billy_version: 0.12.3
+  status: experimental
+  quality: experimental
+  submitted_by: robin994
+prefilter:
+  email:
+    from:
+    - noreply@ausino.it
+    subject_regex:
+    - (?i)^Ausino SPA:\s*invio fattura n\.\s*[0-9]+
+detection:
+  threshold: 70
+  rules:
+  - source: email.from
+    equals: noreply@ausino.it
+    weight: 40
+  - source: email.subject
+    regex: (?i)^Ausino SPA:\s*invio fattura n\.\s*[0-9]+
+    weight: 40
+  - source: attachment.filename
+    regex: (?i)^[0-9]+_[0-9]+\.pdf$
+    weight: 30
+documents:
+  email:
+    enabled: true
+  attachments:
+  - id: invoice_pdf
+    required: true
+    mime_types:
+    - application/pdf
+    filename_regex: (?i)^[0-9]+_[0-9]+\.pdf$
+    extractor: pdf_text
+fields:
+  provider:
+    value: Ausino S.p.A.
+  bill_type:
+    value: water
+  currency:
+    value: EUR
+  invoice_number:
+    required: true
+    candidates:
+    - source: invoice_pdf
+      regex: (?i)FATTURA\s+N\.\s*(?P<value>[0-9]+)\s+DEL
+    - source: email
+      regex: (?i)fattura\s+elettronica\s+originale\s+N\.\s*(?P<value>[0-9]+)
+    transform:
+      type: text
+  issue_date:
+    required: true
+    candidates:
+    - source: invoice_pdf
+      regex: (?i)FATTURA\s+N\.\s*[0-9]+\s+DEL\s+(?P<value>[0-9]{2}/[0-9]{2}/[0-9]{4})
+    - source: email
+      regex: (?i)emessa\s+il\s+(?P<value>[0-9]{2}/[0-9]{2}/[0-9]{4})
+    transform:
+      type: date
+      locale: it_IT
+  amount:
+    required: true
+    candidates:
+    - source: invoice_pdf
+      regex: (?i)IMPORTO\s+DA\s+PAGARE\s*€?\s*(?P<value>[0-9][0-9.,]*)
+    - source: invoice_pdf
+      regex: (?i)Netto\s+a\s+pagare\s+(?P<value>[0-9][0-9.,]*)
+    transform:
+      type: decimal
+      locale: it_IT
+  due_date:
+    required: true
+    candidates:
+    - source: invoice_pdf
+      regex: (?i)SCADENZA\s+(?P<value>[0-9]{2}/[0-9]{2}/[0-9]{4})
+    transform:
+      type: date
+      locale: it_IT
+  period:
+    required: true
+    outputs:
+    - period_start
+    - period_end
+    candidates:
+    - source: invoice_pdf
+      regex: (?i)Periodo\s+di\s+competenza\s+Dal\s+(?P<start>[0-9]{2}/[0-9]{2}/[0-9]{4})\s+al\s+(?P<end>[0-9]{2}/[0-9]{2}/[0-9]{4})
+    transform:
+      type: date_range
+      locale: it_IT
+  consumption:
+    required: false
+    candidates:
+    - source: invoice_pdf
+      regex: (?i)Totale\s+Consumo\s+Fatturato\s+Netto\s+(?P<value>[0-9][0-9.,]*)\s*mc
+    - source: invoice_pdf
+      regex: (?i)fattura\s+(?:è|e')\s+riferita\s+al\s+consumo\s+di\s+mc\.\s*(?P<value>[0-9][0-9.,]*)
+    transform:
+      type: decimal
+      locale: it_IT
+  customer_code:
+    required: false
+    candidates:
+    - source: invoice_pdf
+      regex: (?im)^Codice\s+utenza:\s*(?P<value>[0-9]+)\s*$
+    - source: invoice_pdf
+      regex: (?i)Utenza\s+n[°.]?\s*(?P<value>[0-9]+)
+    transform:
+      type: text
+  contract:
+    required: false
+    candidates:
+    - source: invoice_pdf
+      regex: (?im)^Tariffa\s+Applicata\s+(?P<value>[^\r\n]+)
+    transform:
+      type: text
+verification:
+- field: invoice_number
+  sources:
+  - email
+  - invoice_pdf
+- field: issue_date
+  sources:
+  - email
+  - invoice_pdf
