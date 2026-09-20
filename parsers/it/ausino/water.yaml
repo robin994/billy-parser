@@ -1,13 +1,13 @@
 schema: 1
 id: it.ausino.water
-version: 1
+version: 2
 metadata:
   name: Ausino S.p.A. - Servizio Idrico Integrato
   country: IT
   language: it
   provider: Ausino S.p.A.
   bill_type: water
-  min_billy_version: 0.12.3
+  min_billy_version: 0.6.0
   status: experimental
   quality: experimental
   submitted_by: robin994
