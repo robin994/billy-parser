@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-09-20T04:42:44+00:00",
-  "source_commit": "c2bd59e1a0c90ea13e76c2d3bb0b25b9a35d8b4b",
+  "generated_at": "2026-09-20T05:00:01+00:00",
+  "source_commit": "508d50bfedc0eb3d6b3dd8b4cabf9afcd8d3063e",
   "countries": {
     "IT": {
       "path": "catalog/it.json",
