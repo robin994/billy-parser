@@ -1,0 +1,36 @@
+schema: 1
+id: be.maman.ten_anker
+version: 1
+metadata:
+  name: Facture Maman - Ten Anker
+  country: BE
+  language: nl
+  provider: Telenet
+  bill_type: Ten Anker wzc - verblijfskosten
+  min_billy_version: 0.15.0
+  status: experimental
+  quality: experimental
+  submitted_by: ph-dekeyser
+prefilter:
+  email:
+    subject_contains:
+    - factuur
+    - rekening
+detection:
+  threshold: 60
+  rules:
+  - source: email.subject
+    contains: factuur
+    weight: 60
+documents:
+  email:
+    enabled: true
+fields:
+  provider:
+    value: Ten Anker vzw
+  bill_type:
+    value: Ten Anker wzc - verblijfskosten
+  currency:
+    value: EUR
+  amount:
+    value: 2500.0
