@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "country": "BE",
+  "generated_at": "2026-10-19T23:02:29+00:00",
+  "source_commit": "a65e050608e40cbfd1be3743dc62693a2a00c4d0",
+  "parsers": [
+    {
+      "id": "be.maman.ten_anker",
+      "version": 1,
+      "name": "Facture Maman - Ten Anker",
+      "country": "BE",
+      "language": "nl",
+      "provider": "Telenet",
+      "bill_type": "Ten Anker wzc - verblijfskosten",
+      "quality": "experimental",
+      "status": "experimental",
+      "parser_schema": 1,
+      "min_billy_version": "0.15.0",
+      "path": "parsers/be/maman/ten_anker.yaml",
+      "sha256": "9b0c7984adaaaa266b8da06058d4834b8869ac1b23102129ed1a05c33b46dfa4",
+      "size": 649,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      },
+      "submitted_by": "ph-dekeyser"
+    }
+  ]
+}
