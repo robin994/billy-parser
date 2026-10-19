@@ -133,6 +133,40 @@ def test_contract_parser_id_must_match_yaml(tmp_path: Path):
         MODULE.publish_submission(root, "alice", _body(parser, envelope))
 
 
+@pytest.mark.parametrize(
+    "custom_bill_type",
+    ["Ten Anker wzc - verblijfskosten", "Électricité - forfait mensuel"],
+)
+def test_custom_bill_type_is_preserved_independently_of_parser_id(
+    tmp_path: Path, custom_bill_type: str
+):
+    root = _repo(tmp_path)
+    parser = _parser()
+    parser["metadata"]["bill_type"] = custom_bill_type
+    parser["fields"]["bill_type"]["value"] = custom_bill_type
+
+    result = MODULE.publish_submission(root, "alice", _body(parser))
+    saved = yaml.safe_load((root / result["path"]).read_text(encoding="utf-8"))
+    catalog = MODULE._BUILD.build_catalog(root)
+    entry = next(item for item in catalog["parsers"] if item["id"] == parser["id"])
+
+    assert result["path"] == "parsers/it/community/internet.yaml"
+    assert saved["metadata"]["bill_type"] == custom_bill_type
+    assert saved["fields"]["bill_type"]["value"] == custom_bill_type
+    assert entry["bill_type"] == custom_bill_type
+
+
+def test_custom_bill_type_must_still_match_submission_envelope(tmp_path: Path):
+    root = _repo(tmp_path)
+    parser = _parser()
+    parser["metadata"]["bill_type"] = "Ten Anker wzc - verblijfskosten"
+    parser["fields"]["bill_type"]["value"] = parser["metadata"]["bill_type"]
+    envelope = _envelope(parser)
+    envelope["bill_type"] = "internet"
+    with pytest.raises(MODULE.SubmissionError, match="bill_type does not match"):
+        MODULE.publish_submission(root, "alice", _body(parser, envelope))
+
+
 def test_country_must_be_valid_and_coherent(tmp_path: Path):
     root = _repo(tmp_path)
     parser = _parser()

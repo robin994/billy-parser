@@ -22,8 +22,9 @@
 
 schema: 1
 
-# Globally unique id. Convention: <country>.<provider>.<bill_type>, all
-# lowercase, segments separated by "." "_" or "-".
+# Globally unique technical id. Convention: <country>.<provider>.<parser_slug>, all
+# lowercase, segments separated by "." "_" or "-". The final slug does NOT need
+# to match metadata.bill_type (which may be a user-defined category with spaces).
 # Must match ^[a-z0-9]+(?:[._-][a-z0-9]+)+$ and be unique across the whole repo.
 id: xx.acme.gas
 
@@ -36,7 +37,7 @@ metadata:
   country: XX                             # ISO 3166-1 alpha-2, uppercase.
   language: xx                            # ISO 639-1, lowercase (e.g. it, en, it_IT).
   provider: ACME Energy                   # Provider/company display name.
-  bill_type: gas                          # Free-form short slug (electricity, gas, internet, mobile, ...).
+  bill_type: gas                          # Exact bill type/category name in Billy; custom labels are supported.
   homepage: https://www.example.com/      # Optional. Provider's website.
   min_billy_version: 0.6.0                # Minimum Billy version able to run this parser.
 

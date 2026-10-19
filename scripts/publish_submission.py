@@ -124,14 +124,11 @@ def _target_path(root: Path, parser: dict[str, Any]) -> Path:
     parser_id = str(parser.get("id") or "")
     metadata = parser.get("metadata") or {}
     country = str(metadata.get("country") or "").casefold()
-    bill_type = str(metadata.get("bill_type") or "").casefold()
     parts = parser_id.split(".")
     if len(parts) < 3:
-        raise SubmissionError("Parser IDs must contain country, provider and bill type")
+        raise SubmissionError("Parser IDs must contain country, provider and parser slugs")
     if parts[0] != country:
         raise SubmissionError("Parser ID country prefix does not match metadata.country")
-    if parts[-1] != bill_type:
-        raise SubmissionError("Parser ID suffix must match metadata.bill_type")
     if any(not re.fullmatch(r"[a-z0-9_-]+", part) for part in parts):
         raise SubmissionError("Parser ID contains an unsafe path segment")
     target = root / "parsers" / Path(*parts[:-1]) / f"{parts[-1]}.yaml"

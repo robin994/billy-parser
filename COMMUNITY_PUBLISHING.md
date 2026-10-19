@@ -17,7 +17,7 @@ Community write workflows share the concurrency group `billy-parser-community-wr
 2. `scripts/publish_submission.py` extracts the JSON envelope and YAML strictly as data.
 3. The JSON is checked against `schema/submission.schema.json`.
 4. The YAML is checked against `schema/parser.schema.json` and the repository semantic/regex/privacy validator.
-5. Envelope identity must match the YAML (`parser_id`, version, country, provider and bill type).
+5. Envelope identity must match the YAML (`parser_id`, version, country, provider and bill type). The technical parser ID's final slug does not have to match the user-defined `metadata.bill_type` label.
 6. The repository path is derived from the validated parser id; user-provided paths are never used.
 7. `metadata.status` and compatibility `metadata.quality` are forced to `experimental`.
 8. A new parser is created, or an existing parser is replaced only when the submitted version is higher.
