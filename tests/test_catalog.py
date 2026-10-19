@@ -43,14 +43,23 @@ def test_catalog_v2_groups_parsers_by_country():
     assert [item["id"] for item in shards["FR"]["parsers"]] == ["fr.demo.energy"]
 
 
-def test_catalog_v2_current_repo_exposes_only_italian_shard():
+def test_catalog_v2_current_repo_exposes_every_country_shard():
     catalog = MODULE.build_catalog()
     index, shards = MODULE.build_catalog_v2(catalog)
 
-    assert index["countries"]["IT"]["path"] == "catalog/it.json"
-    assert index["countries"]["IT"]["parsers"] == len(catalog["parsers"])
-    assert set(shards) == {"IT"}
-    assert all(item["country"] == "IT" for item in shards["IT"]["parsers"])
+    countries = {item["country"] for item in catalog["parsers"]}
+    assert set(index["countries"]) == countries
+    assert set(shards) == countries
+    for country in countries:
+        expected = [item for item in catalog["parsers"] if item["country"] == country]
+        assert index["countries"][country] == {
+            "path": f"catalog/{country.lower()}.json",
+            "parsers": len(expected),
+        }
+        assert shards[country]["country"] == country
+        assert [item["id"] for item in shards[country]["parsers"]] == sorted(
+            item["id"] for item in expected
+        )
 
 
 def test_catalog_status_tracks_parser_lifecycle():
