@@ -79,6 +79,14 @@ Billy creates issues containing exactly one marker:
 
 followed by the submission JSON and a fenced YAML parser. The pipeline validates both schemas, parser identity/version/country/provider/type consistency, safe paths, regexes, parser schema compatibility and semantic/privacy rules.
 
+These are distinct version numbers: `schema_version: 2` is required in the
+submission **JSON** envelope; the parser **YAML** must still use `schema: 1`.
+`version` is the revision of that particular parser. Place
+`requested_status: experimental` only in the JSON envelope, not under YAML
+`metadata`. The YAML uses `metadata.status` (automatically forced to
+`experimental` for community submissions). A technical parser ID slug is
+independent of a user-defined `metadata.bill_type` label.
+
 Valid new parsers are created automatically. Existing parsers can be replaced only by a strictly higher version. The workflow forces:
 
 ```yaml

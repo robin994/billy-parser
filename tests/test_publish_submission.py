@@ -124,6 +124,25 @@ def test_invalid_yaml_is_rejected(tmp_path: Path):
         MODULE.publish_submission(root, "alice", body)
 
 
+def test_v2_submission_still_requires_v1_parser_yaml(tmp_path: Path):
+    root = _repo(tmp_path)
+    parser = _parser()
+    parser["schema"] = 2
+    with pytest.raises(MODULE.SubmissionError, match="schema: 1.*schema_version: 2"):
+        MODULE.publish_submission(root, "alice", _body(parser))
+
+
+def test_misplaced_requested_status_has_actionable_error(tmp_path: Path):
+    root = _repo(tmp_path)
+    parser = _parser()
+    parser["metadata"]["requested_status"] = "experimental"
+    with pytest.raises(
+        MODULE.SubmissionError,
+        match=r"metadata\.requested_status.*submission JSON envelope",
+    ):
+        MODULE.publish_submission(root, "alice", _body(parser))
+
+
 def test_contract_parser_id_must_match_yaml(tmp_path: Path):
     root = _repo(tmp_path)
     parser = _parser()

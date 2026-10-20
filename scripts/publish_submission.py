@@ -109,6 +109,19 @@ def _validate_json_schema(root: Path, envelope: dict[str, Any]) -> None:
 
 
 def _validate_parser_schema(root: Path, parser: dict[str, Any]) -> None:
+    if parser.get("schema") == 2:
+        raise SubmissionError(
+            "Parser YAML uses schema: 1; schema_version: 2 belongs only to the JSON "
+            "submission envelope"
+        )
+    metadata = parser.get("metadata")
+    if isinstance(metadata, dict) and "requested_status" in metadata:
+        raise SubmissionError(
+            "metadata.requested_status is not a parser YAML field; keep "
+            "requested_status: experimental in the submission JSON envelope. "
+            "Use metadata.status: experimental in parser YAML (or omit it; the "
+            "publisher sets it automatically)"
+        )
     schema = json.loads((root / "schema" / "parser.schema.json").read_text(encoding="utf-8"))
     validator = Draft202012Validator(schema, format_checker=FormatChecker())
     errors = sorted(validator.iter_errors(parser), key=lambda err: list(err.absolute_path))
