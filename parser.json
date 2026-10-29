@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-29T08:36:47+00:00",
-  "source_commit": "7441b8ab7f69535e996d619e5b8c0ad75c80527d",
+  "generated_at": "2026-10-29T08:37:47+00:00",
+  "source_commit": "b0eeb27d0c87205f6a9340dad59e97c82a4bff0a",
   "parsers": [
     {
       "id": "be.maman.ten_anker",
@@ -284,6 +284,29 @@
       "path": "parsers/us/blackhillsenergy/energy.yaml",
       "sha256": "7e85cc354ee506ec2735224d5df9bbeb4c3945db89a290cd655408bb5e561cb0",
       "size": 1770,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      },
+      "submitted_by": "tficken"
+    },
+    {
+      "id": "us.chase.auto_loan",
+      "version": 1,
+      "name": "Chase auto loan",
+      "country": "US",
+      "language": "en",
+      "provider": "Chase",
+      "bill_type": "auto_loan",
+      "quality": "experimental",
+      "status": "experimental",
+      "parser_schema": 1,
+      "min_billy_version": "0.6.0",
+      "path": "parsers/us/chase/auto_loan.yaml",
+      "sha256": "1cc68d50634d404d2358c4c2900cc2a96ce66facce34e0e9336b5e3b3e39c39e",
+      "size": 1410,
       "feedback": {
         "working": 0,
         "partial": 0,

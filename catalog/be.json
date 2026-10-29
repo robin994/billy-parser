@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "country": "BE",
-  "generated_at": "2026-10-29T08:36:47+00:00",
-  "source_commit": "7441b8ab7f69535e996d619e5b8c0ad75c80527d",
+  "generated_at": "2026-10-29T08:37:47+00:00",
+  "source_commit": "b0eeb27d0c87205f6a9340dad59e97c82a4bff0a",
   "parsers": [
     {
       "id": "be.maman.ten_anker",
