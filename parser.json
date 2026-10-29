@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-29T00:16:04+00:00",
-  "source_commit": "d6d293c3258220883e15bf8ca7593c254e04e0a2",
+  "generated_at": "2026-10-29T08:36:47+00:00",
+  "source_commit": "7441b8ab7f69535e996d619e5b8c0ad75c80527d",
   "parsers": [
     {
       "id": "be.maman.ten_anker",
