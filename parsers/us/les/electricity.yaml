@@ -1,0 +1,71 @@
+schema: 1
+id: us.les.electricity
+version: 1
+metadata:
+  name: LES (Lincoln Electric System)
+  country: US
+  language: en
+  provider: LES
+  bill_type: electricity
+  homepage: https://www.les.com/
+  status: experimental
+  quality: experimental
+  min_billy_version: 0.6.0
+  submitted_by: tficken
+prefilter:
+  email:
+    from:
+    - noreply@les.com
+    subject_contains:
+    - bill is available
+detection:
+  threshold: 70
+  rules:
+  - source: email.from
+    equals: noreply@les.com
+    weight: 60
+  - source: email.subject
+    regex: (?i)^Your\s+LES\s+Bill\s+is\s+Available
+    weight: 35
+  - source: email.body
+    regex: (?i)\bLES\s+account\b
+    weight: 20
+documents:
+  email:
+    enabled: true
+  attachments: []
+fields:
+  provider:
+    value: LES
+  bill_type:
+    value: electricity
+  currency:
+    value: USD
+  amount:
+    required: true
+    candidates:
+    - source: email
+      regex: (?i)payment\s+of\s+\$\s*(?P<value>[0-9,]+\.[0-9]{2})
+    - source: email
+      regex: (?i)Amount\s+Due[:\s]*\$\s*(?P<value>[0-9,]+\.[0-9]{2})
+    transform:
+      type: decimal
+      locale: en_US
+  due_date:
+    candidates:
+    - source: email
+      regex: (?i)is\s+due\s+on\s+(?P<value>\d{1,2}/\d{1,2}/\d{4})
+    - source: email
+      regex: (?i)Due\s+Date[:\s]*(?P<value>\d{1,2}/\d{1,2}/\d{4})
+    transform:
+      type: date
+      locale: en_US
+      formats:
+      - '%m/%d/%Y'
+      - '%B %d, %Y'
+  customer_code:
+    candidates:
+    - source: email
+      regex: (?i)LES\s+account\s+(?P<value>[*0-9]+)
+    transform:
+      type: text
