@@ -9,7 +9,7 @@ Billy Parser is designed for an unattended community pipeline. Normal parser sub
 - `.github/workflows/build-catalog.yml` rebuilds generated catalogs for direct repository changes.
 - `.github/workflows/validate.yml` runs source validation and tests.
 
-Community write workflows share the concurrency group `billy-parser-community-writes` with `cancel-in-progress: false` so parser, feedback and generated catalog writes are serialized.
+Community write workflows share the concurrency group `billy-parser-community-writes` with `cancel-in-progress: false` and `queue: max` so parser, feedback and generated catalog writes are serialized without newer submissions replacing older pending runs (up to 100 waiting runs).
 
 ## Submission flow
 

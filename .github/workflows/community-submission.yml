@@ -12,6 +12,7 @@ permissions:
 concurrency:
   group: billy-parser-community-writes
   cancel-in-progress: false
+  queue: max
 
 jobs:
   publish:
