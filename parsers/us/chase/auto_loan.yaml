@@ -1,0 +1,67 @@
+schema: 1
+id: us.chase.auto_loan
+version: 1
+metadata:
+  name: Chase auto loan
+  country: US
+  language: en
+  provider: Chase
+  bill_type: auto_loan
+  homepage: https://www.chase.com/
+  status: experimental
+  quality: experimental
+  min_billy_version: 0.6.0
+  submitted_by: tficken
+prefilter:
+  email:
+    from:
+    - no.reply.alerts@chase.com
+    subject_contains:
+    - auto account statement
+detection:
+  threshold: 70
+  rules:
+  - source: email.from
+    equals: no.reply.alerts@chase.com
+    weight: 60
+  - source: email.subject
+    regex: (?i)^Your\s+auto\s+account\s+statement\s+is\s+available
+    weight: 35
+  - source: email.body
+    regex: (?i)auto\s+account\s+statement
+    weight: 20
+documents:
+  email:
+    enabled: true
+  attachments: []
+fields:
+  provider:
+    value: Chase
+  bill_type:
+    value: auto_loan
+  currency:
+    value: USD
+  amount:
+    required: true
+    candidates:
+    - source: email
+      regex: (?i)Amount\s+due\s*\$\s*(?P<value>[0-9,]+\.[0-9]{2})
+    transform:
+      type: decimal
+      locale: en_US
+  due_date:
+    required: true
+    candidates:
+    - source: email
+      regex: (?i)Due\s+date\s*(?P<value>\d{1,2}/\d{1,2}/\d{4})
+    transform:
+      type: date
+      locale: en_US
+      formats:
+      - '%m/%d/%Y'
+  customer_code:
+    candidates:
+    - source: email
+      regex: (?i)Account\s+ending\s+in\s*\(?(?:\.){0,3}(?P<value>\d{4})\)?
+    transform:
+      type: text
