@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-19T23:02:29+00:00",
-  "source_commit": "a65e050608e40cbfd1be3743dc62693a2a00c4d0",
+  "generated_at": "2026-10-29T00:02:28+00:00",
+  "source_commit": "b12684a41e00da6b8e00f55da25d846f18d7cd1f",
   "parsers": [
     {
       "id": "be.maman.ten_anker",
@@ -268,6 +268,29 @@
         "failed": 0,
         "contributors": 0
       }
+    },
+    {
+      "id": "us.blackhillsenergy.energy",
+      "version": 1,
+      "name": "Black Hills Energy",
+      "country": "US",
+      "language": "en",
+      "provider": "Black Hills Energy",
+      "bill_type": "energy",
+      "quality": "experimental",
+      "status": "experimental",
+      "parser_schema": 1,
+      "min_billy_version": "0.6.0",
+      "path": "parsers/us/blackhillsenergy/energy.yaml",
+      "sha256": "7e85cc354ee506ec2735224d5df9bbeb4c3945db89a290cd655408bb5e561cb0",
+      "size": 1770,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      },
+      "submitted_by": "tficken"
     }
   ]
 }
