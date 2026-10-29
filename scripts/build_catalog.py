@@ -70,8 +70,23 @@ def _regex_safety_validate(pattern: str, path: Path) -> None:
     # unnecessary for Billy's extraction model.
     if re.search(r"(?<!\\)\\[1-9]", pattern) or "(?P=" in pattern:
         raise ValueError(f"{path.relative_to(ROOT)}: regex backreferences are not allowed")
-    if "(?(" in pattern:
-        raise ValueError(f"{path.relative_to(ROOT)}: conditional regex groups are not allowed")
+    # Only an unescaped "(?(" outside a character class starts a conditional.
+    # An optional literal parenthesis followed by a non-capturing group, as in
+    # r"\(?(?:\.){0,3}", must be allowed (issue #11).
+    in_character_class = False
+    index = 0
+    while index < len(pattern):
+        char = pattern[index]
+        if char == "\\":
+            index += 2  # An escape consumes the following character.
+            continue
+        if char == "[" and not in_character_class:
+            in_character_class = True
+        elif char == "]" and in_character_class:
+            in_character_class = False
+        elif not in_character_class and pattern.startswith("(?(", index):
+            raise ValueError(f"{path.relative_to(ROOT)}: conditional regex groups are not allowed")
+        index += 1
 
     # Catch the most common nested-quantifier forms: (.+)+, (.*)*, (\w+)+, etc.
     if re.search(r"\((?:\?:)?(?:[^()\\]|\\.){0,180}[+*](?:[^()\\]|\\.){0,180}\)[+*]", pattern):

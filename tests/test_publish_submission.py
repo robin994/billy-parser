@@ -212,6 +212,20 @@ def test_invalid_regex_is_rejected(tmp_path: Path):
         MODULE.publish_submission(root, "alice", _body(parser))
 
 
+def test_chase_style_customer_code_regex_is_accepted(tmp_path: Path):
+    root = _repo(tmp_path)
+    parser = _parser()
+    parser["fields"]["customer_code"] = {
+        "candidates": [{
+            "source": "email",
+            "regex": r"(?i)Account\s+ending\s+in\s*\(?(?:\.){0,3}(?P<value>\d{4})\)?",
+        }],
+        "transform": {"type": "text"},
+    }
+    result = MODULE.publish_submission(root, "alice", _body(parser))
+    assert result["status"] == "experimental"
+
+
 def test_higher_version_can_replace_verified_and_returns_experimental(tmp_path: Path):
     root = _repo(tmp_path)
     first = MODULE.publish_submission(root, "alice", _body(_parser(1)))
