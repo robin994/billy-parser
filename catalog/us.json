@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "country": "US",
-  "generated_at": "2026-10-29T08:37:47+00:00",
-  "source_commit": "b0eeb27d0c87205f6a9340dad59e97c82a4bff0a",
+  "generated_at": "2026-10-29T08:38:13+00:00",
+  "source_commit": "2b1a9b6e07359e74747bc03cae833b23083f8436",
   "parsers": [
     {
       "id": "us.blackhillsenergy.energy",
@@ -65,6 +65,29 @@
       "path": "parsers/us/les/electricity.yaml",
       "sha256": "54c0bbaae15308405ae698ddb6f17d0dd6c68dd91dc323b05124ce060e65d9b0",
       "size": 1528,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      },
+      "submitted_by": "tficken"
+    },
+    {
+      "id": "us.verizonwireless.telecom",
+      "version": 1,
+      "name": "Verizon Wireless",
+      "country": "US",
+      "language": "en",
+      "provider": "Verizon Wireless",
+      "bill_type": "telecom",
+      "quality": "experimental",
+      "status": "experimental",
+      "parser_schema": 1,
+      "min_billy_version": "0.6.0",
+      "path": "parsers/us/verizonwireless/telecom.yaml",
+      "sha256": "7a83f98776d189d056d1f9ff078b4d6616d23b6efb9bf863a77dff8bf4430030",
+      "size": 1446,
       "feedback": {
         "working": 0,
         "partial": 0,

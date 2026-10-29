@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-10-29T08:37:47+00:00",
-  "source_commit": "b0eeb27d0c87205f6a9340dad59e97c82a4bff0a",
+  "generated_at": "2026-10-29T08:38:13+00:00",
+  "source_commit": "2b1a9b6e07359e74747bc03cae833b23083f8436",
   "countries": {
     "BE": {
       "path": "catalog/be.json",
@@ -13,7 +13,7 @@
     },
     "US": {
       "path": "catalog/us.json",
-      "parsers": 3
+      "parsers": 4
     }
   }
 }
