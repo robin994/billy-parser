@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-29T00:02:28+00:00",
-  "source_commit": "b12684a41e00da6b8e00f55da25d846f18d7cd1f",
+  "generated_at": "2026-10-29T00:16:04+00:00",
+  "source_commit": "d6d293c3258220883e15bf8ca7593c254e04e0a2",
   "parsers": [
     {
       "id": "be.maman.ten_anker",
@@ -284,6 +284,29 @@
       "path": "parsers/us/blackhillsenergy/energy.yaml",
       "sha256": "7e85cc354ee506ec2735224d5df9bbeb4c3945db89a290cd655408bb5e561cb0",
       "size": 1770,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      },
+      "submitted_by": "tficken"
+    },
+    {
+      "id": "us.les.electricity",
+      "version": 1,
+      "name": "LES (Lincoln Electric System)",
+      "country": "US",
+      "language": "en",
+      "provider": "LES",
+      "bill_type": "electricity",
+      "quality": "experimental",
+      "status": "experimental",
+      "parser_schema": 1,
+      "min_billy_version": "0.6.0",
+      "path": "parsers/us/les/electricity.yaml",
+      "sha256": "54c0bbaae15308405ae698ddb6f17d0dd6c68dd91dc323b05124ce060e65d9b0",
+      "size": 1528,
       "feedback": {
         "working": 0,
         "partial": 0,
