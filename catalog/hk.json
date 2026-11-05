@@ -1,0 +1,31 @@
+{
+  "schema_version": 2,
+  "country": "HK",
+  "generated_at": "2026-11-05T21:13:08+00:00",
+  "source_commit": "e1552335cf72c7bd0177d7a3f7e3626c39b6b0a4",
+  "parsers": [
+    {
+      "id": "hk.hkelectric.electricity",
+      "version": 5,
+      "name": "HK Electric",
+      "country": "HK",
+      "language": "en",
+      "provider": "HK Electric",
+      "bill_type": "electricity",
+      "quality": "experimental",
+      "status": "experimental",
+      "parser_schema": 1,
+      "min_billy_version": "0.6.0",
+      "path": "parsers/hk/hkelectric/electricity.yaml",
+      "sha256": "67a18c579adb0593d5c82b1b7a7ed83c313ca90b0b6b1c2169c979edc3953e57",
+      "size": 1717,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      },
+      "submitted_by": "petitepatate7h"
+    }
+  ]
+}
