@@ -1,0 +1,67 @@
+schema: 1
+id: hk.wsd.water
+version: 1
+metadata:
+  name: Water Supplies Department
+  country: HK
+  language: en
+  provider: Water Supplies Department
+  bill_type: water
+  homepage: https://www.wsd.gov.hk/
+  status: experimental
+  quality: experimental
+  min_billy_version: 0.6.0
+  submitted_by: petitepatate7h
+prefilter:
+  email:
+    from:
+    - customer_services@wsd.gov.hk
+    subject_contains:
+    - Water Supplies Department - Water Bill
+detection:
+  threshold: 70
+  rules:
+  - source: email.from
+    equals: customer_services@wsd.gov.hk
+    weight: 50
+  - source: email.subject
+    regex: (?i)Water\s+Supplies\s+Department\s*-\s*Water\s+Bill
+    weight: 20
+documents:
+  email:
+    enabled: true
+fields:
+  provider:
+    value: Water Supplies Department
+  bill_type:
+    value: water
+  currency:
+    value: HKD
+  amount:
+    required: true
+    candidates:
+    - source: email
+      regex: (?i)total\s*amount\s*due[^$0-9]{0,60}\$\s*(?P<value>[0-9,]+\.[0-9]{2})
+    transform:
+      type: decimal
+      locale: en_US
+  issue_date:
+    candidates:
+    - source: email
+      regex: (?i)Bill\s*Issue\s*Date[^0-9]{0,10}(?P<value>\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4})
+    transform:
+      type: date
+      locale: en_GB
+      formats:
+      - '%d %b %Y'
+      - '%d %B %Y'
+  due_date:
+    candidates:
+    - source: email
+      regex: (?i)on\s+or\s+before\s*(?P<value>\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4})
+    transform:
+      type: date
+      locale: en_GB
+      formats:
+      - '%d %b %Y'
+      - '%d %B %Y'
