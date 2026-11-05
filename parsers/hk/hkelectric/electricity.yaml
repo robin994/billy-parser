@@ -1,0 +1,79 @@
+schema: 1
+id: hk.hkelectric.electricity
+version: 5
+metadata:
+  name: HK Electric
+  country: HK
+  language: en
+  provider: HK Electric
+  bill_type: electricity
+  homepage: https://www.hkelectric.com/
+  status: experimental
+  quality: experimental
+  min_billy_version: 0.6.0
+  submitted_by: petitepatate7h
+prefilter:
+  email:
+    from:
+    - bill2@hkelectric.com
+    subject_contains:
+    - HK Electric Electricity Bill
+detection:
+  threshold: 70
+  rules:
+  - source: email.from
+    equals: bill2@hkelectric.com
+    weight: 50
+  - source: email.subject
+    regex: (?i)HK\s+Electric\s+Electricity\s+Bill
+    weight: 20
+documents:
+  email:
+    enabled: true
+fields:
+  provider:
+    value: HK Electric
+  bill_type:
+    value: electricity
+  currency:
+    value: HKD
+  amount:
+    required: true
+    candidates:
+    - source: email
+      regex: (?i)Billing\s*Amount[^$0-9]{0,40}\$\s*(?P<value>[0-9,]+\.[0-9]{2})
+    transform:
+      type: decimal
+      locale: en_US
+  issue_date:
+    candidates:
+    - source: email
+      regex: (?i)\bdated\s*(?P<value>\d{2}/\d{2}/\d{4})
+    transform:
+      type: date
+      locale: en_GB
+      formats:
+      - '%d/%m/%Y'
+  period:
+    outputs:
+    - period_start
+    - period_end
+    candidates:
+    - source: email
+      regex: (?i)Period\s*of\s*Consumption[^0-9]{0,40}(?P<start>\d{2}/\d{2}/\d{4})[^0-9]{0,20}(?P<end>\d{2}/\d{2}/\d{4})
+    transform:
+      type: date_range
+      locale: en_GB
+      formats:
+      - '%d/%m/%Y'
+      start_group: start
+      end_group: end
+  consumption:
+    candidates:
+    - source: email
+      regex: (?i)Consumption[^0-9a-z]{0,40}(?P<value>[0-9,]+)\s*Units
+    transform:
+      type: decimal
+      locale: en_US
+  consumption_unit:
+    value: kWh
