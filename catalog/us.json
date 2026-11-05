@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "country": "US",
-  "generated_at": "2026-11-05T21:13:08+00:00",
-  "source_commit": "e1552335cf72c7bd0177d7a3f7e3626c39b6b0a4",
+  "generated_at": "2026-11-05T21:14:00+00:00",
+  "source_commit": "772093b2e8ca9abedb4f0af0fb79cf49bde34dc0",
   "parsers": [
     {
       "id": "us.blackhillsenergy.energy",

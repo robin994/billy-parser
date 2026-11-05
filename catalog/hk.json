@@ -1,8 +1,8 @@
 {
   "schema_version": 2,
   "country": "HK",
-  "generated_at": "2026-11-05T21:13:08+00:00",
-  "source_commit": "e1552335cf72c7bd0177d7a3f7e3626c39b6b0a4",
+  "generated_at": "2026-11-05T21:14:00+00:00",
+  "source_commit": "772093b2e8ca9abedb4f0af0fb79cf49bde34dc0",
   "parsers": [
     {
       "id": "hk.hkelectric.electricity",
@@ -19,6 +19,29 @@
       "path": "parsers/hk/hkelectric/electricity.yaml",
       "sha256": "67a18c579adb0593d5c82b1b7a7ed83c313ca90b0b6b1c2169c979edc3953e57",
       "size": 1717,
+      "feedback": {
+        "working": 0,
+        "partial": 0,
+        "failed": 0,
+        "contributors": 0
+      },
+      "submitted_by": "petitepatate7h"
+    },
+    {
+      "id": "hk.wsd.water",
+      "version": 1,
+      "name": "Water Supplies Department",
+      "country": "HK",
+      "language": "en",
+      "provider": "Water Supplies Department",
+      "bill_type": "water",
+      "quality": "experimental",
+      "status": "experimental",
+      "parser_schema": 1,
+      "min_billy_version": "0.6.0",
+      "path": "parsers/hk/wsd/water.yaml",
+      "sha256": "ddfd2666e8ec06db6b2339055762cbcc46df539c825eec25b41019e56feaf33f",
+      "size": 1495,
       "feedback": {
         "working": 0,
         "partial": 0,
